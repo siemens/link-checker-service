@@ -7,8 +7,12 @@ Endpoints:
   - `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
   - `/version` returns the server version
 
-See the [Releases page](https://github.com/siemens/link-checker-service/-/releases)
-for the latest pre-compiled binaries.
+
+## Installing
+
+```
+go get -u github.com/siemens/link-checker-service
+```
 
 ## Motivation
 
