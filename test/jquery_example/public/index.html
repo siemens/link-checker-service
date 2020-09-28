@@ -1,0 +1,396 @@
+<!-- Copyright 2020 Siemens AG -->
+<!-- This Source Code Form is subject to the terms of -->
+<!-- Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) license -->
+<!-- https://creativecommons.org/licenses/by-sa/4.0/ -->
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<!doctype html>
+<html lang="en">
+<head>
+<title>Sample Link Checker Service Usage</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+function statusOf(urlResult) {
+    var suffix = '';
+    if (urlResult.body_patterns_found && urlResult.body_patterns_found.length > 0)
+        suffix = "patterns found: " + urlResult.body_patterns_found
+
+    if (urlResult.status == 'ok')
+        return '✔' + suffix;
+    if (urlResult.status == 'broken')
+        return '✘ (' + urlResult. http_status + ') ' + suffix;
+
+    return urlResult.status + suffix;
+}
+
+function updateUrlList(text) {
+    var urls = $(text.split('\n')).filter(function (_i,u){
+        return u!='';
+    }).map(function(i,u){
+        return u.trim();
+    }).toArray();
+    // console.log(urls);
+    // empty the list
+    $("#url-list").empty();
+    // fill the list
+    $(urls).each(function (i, url) {
+        // tag the list items
+        $("#url-list").append('<li data-check-result="" id="url-to-check-'+i+'" data-href="'+url+'"><a href="'+url+'">'+url+'</a> <span data-toggle="tooltip" title="" data-placement="right" class="url-check-result" id="url-check-result-'+i+'"></span></li>');
+    });
+    $('#check-button').text('Check ('+urls.length+')')
+    return urls;
+}
+
+function getWindow() {
+    return window.webkitURL || window.URL;
+}
+
+function disableButtons() {
+    $('#check-button').prop('disabled', true);
+    $('#check-async-button').prop('disabled', true);
+    $('#download-csv-button').prop('disabled', true);
+}
+
+function enableButtons() {
+    $('#check-button').prop('disabled', null);
+    $('#check-async-button').prop('disabled', null);
+    $('#download-csv-button').prop('disabled', null);
+}
+
+function clearResults() {
+    getWindow().results = [];
+}
+
+function csvValue(value) {
+    if (!/\s|\,|\"/.test(value)/*any whitespace or delimiter*/)
+        return value;
+
+    return "\"" + value.replace(/\"/g,"\"\"") + "\""
+}
+
+function bodyPatternsFound(url) {
+    if (!url || !url.body_patterns_found)
+        return "";
+
+    return url.body_patterns_found.join(",");
+}
+
+function urlToRow(url) {
+    var row = [url.context, url.url, url.status, url.http_status, url.error ? url.error : "", url.timestamp, bodyPatternsFound(url)];
+    return $(row).map(function(_,e){return csvValue(e);}).toArray();
+}
+
+function getCSVResults() {
+    var delimiter = ",";
+    var delimHeader = ["sep="+delimiter];
+    var header = ["context", "url", "status", "http_status", "error", "timestamp", "body_patterns_found"];
+    var urlRows = $(getWindow().results).map(function(_,url) {return [urlToRow(url)];}).toArray();
+    var allrows = $([delimHeader, header].concat(urlRows)).map(function(_,row){return $(row).toArray().join(delimiter);}).toArray();
+    var csv = allrows.join('\r\n');
+    return csv;
+}
+
+function downloadCSV() {
+    var csv = getCSVResults();
+    var blob = new Blob([csv], {type: "text/csv"});
+    var filename = "results.csv";
+    // if edge or IE
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.setAttribute("style", "display: none");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    }
+}
+
+function trackResult(index, url) {
+    var selector = "#url-check-result-"+url.context;
+    $(selector).text(statusOf(url));
+    $(selector).attr('title', url.error);
+    var showSuccesses = showSuccessesChecked();
+    var li = $('#url-to-check-'+url.context);
+    $(li).attr('data-check-result',url.status);
+    if (url.status == 'ok') {
+        if (!showSuccesses) {
+            li.hide();
+        } else if (matchesFilter(url.url)) {
+            li.show();
+        } else {
+            li.hide();
+        }
+    }
+}
+
+function updateProgress(text) {
+    $("#check-status").text(text);
+}
+
+function matchesFilter(url) {
+    var filter = $('#filter-input').val();
+    var words = $(filter.split(' '))
+        .map(function (_,w) { return w.trim().toLowerCase(); })
+        .filter(function(_, w) { return w!==''; })
+        .toArray();
+
+    if (words.length===0)
+        return true;
+
+    url = url.toLowerCase();
+
+    var matchingWords = $(words).filter(function(_, w) { return url.indexOf(w) !== -1; }).toArray();
+
+    if (!invertFilterChecked()) {
+        if (matchingWords.length === words.length) {
+            return true;
+        }
+    } else {
+        if (matchingWords.length===0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function showSuccessesChecked() {
+    return $('#showSuccesses').is(":checked")
+}
+
+function invertFilterChecked() {
+    return $('#invertFilter').is(":checked")
+}
+
+function filterResults() {
+    var showSuccesses = showSuccessesChecked();
+
+    $('#url-list li').each(function(_,e) {
+        var url = $(e).attr('data-href');
+        var checkResult = $(e).attr('data-check-result');
+        if (matchesFilter(url)) {
+            if (showSuccesses && checkResult == 'ok')
+                $(e).show();
+            else if (!showSuccesses && checkResult == 'ok')
+                $(e).hide();
+            else
+                $(e).show();
+        } else {
+            $(e).hide();
+        }
+    });
+
+    sortResultsBystatus()
+}
+
+function sortResultsBystatus() {
+    var sortedResults = $("#url-list li").sort(function (a, b) {
+        var aText = $(a).find('.url-check-result').text();
+        var bText = $(b).find('.url-check-result').text();
+        return (aText < bText) ? 1 : (aText === bText) ? 0 : -1;
+    });
+
+    sortedResults.appendTo('#url-list');
+}
+
+$(document).ready(function(){
+    var urls = [];
+
+    $('#url-list-text').bind('input propertychange', function() {
+        urls = updateUrlList(this.value);
+    });
+
+    var filterInput = $('#filter-input');
+
+    filterInput.bind('input propertychange', function() {
+        filterResults();
+    });
+
+    filterInput.keypress(function (e) {
+        if (e.which === 13 /*enter*/) {
+            filterResults();
+        }
+    });
+
+    $('#showSuccesses').change(function() {
+        filterResults();
+    });
+
+    $('#invertFilter').change(function() {
+        filterResults();
+    });
+
+    $.get("urls.txt",function(text) {
+        $("#url-list-text").val(text);
+        urls = updateUrlList(text);
+    })
+
+    $('#check-button').click(function(){
+        disableButtons();
+        clearResults();
+
+        console.log("checking ...");
+        var requestData = $(urls).map(function(i,u){
+            return ({
+                url: u,
+                context: ''+i
+            });
+        }).toArray();
+        var requestBody = JSON.stringify({urls: requestData});
+        updateProgress('Check status: requested...');
+        $.post(
+            "http://localhost:8080/checkUrls",
+            requestBody,
+            function(result){
+                updateProgress('Check status: '+result.result);
+                console.log(result);
+                $(result.urls).each(trackResult);
+                filterResults();
+                enableButtons();
+                getWindow().results = result.urls;
+            },
+            "json"
+        ).fail(function(err){
+            updateProgress('Check status: '+err.statusText);
+            enableButtons();
+        });
+    });
+
+    $('#check-async-button').click(function(){
+        disableButtons();
+        clearResults();
+        console.log("checking (async) ...");
+        var requestData = $(urls).map(function(i,u){
+            return ({
+                url: u,
+                context: ''+i
+            });
+        }).toArray();
+
+        var totalUrls = urls.length;
+        var urlCount = 0;
+        var requestBody = JSON.stringify({urls: requestData});
+        updateProgress('Check status: stream requested...');
+
+        var messageStart = 0;
+        var chunkAttempts = 0;
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:8080/checkUrls/stream',
+            data: requestBody,
+            dataType: 'json',
+            processData: false,
+            xhrFields: {
+                onprogress: function(e)
+                {
+                    var urlSubstring = null;
+                    var response = e.currentTarget.response;
+                    var indexOfBreak = -1;
+                    chunkAttempts++;
+                    do {
+                        // split individual JSON objects
+                        var nextMessage = response.substring(messageStart);
+                        indexOfBreak = nextMessage.indexOf('\n');
+                        if ( indexOfBreak > 0 ) {
+                            urlSubstring = nextMessage.substring(0, indexOfBreak);
+                            messageStart = messageStart + indexOfBreak + 1;
+
+                            // try parsing the message
+                            try {
+                                if (urlSubstring) {
+                                    var url = JSON.parse(urlSubstring.trim());
+                                    console.log(url);
+                                    trackResult(0, url);
+                                    getWindow().results.push(url);
+                                    urlCount++;
+                                    updateProgress('Check status: '+urlCount+'/'+totalUrls);
+                                }
+                            } catch (error) {
+                                console.log(error);
+                            }
+                        }
+                    } while (indexOfBreak > 0 && chunkAttempts < 10000 /*would limit large requests on the UI side* for responsiveness*/)
+                }
+            }
+        }).done(function()
+        {
+            updateProgress('Check status: done '+urlCount+'/'+totalUrls);
+            filterResults();
+            enableButtons();
+        }).fail(function(e){
+            if (e.statusText.toLowerCase()==='ok') {
+                updateProgress('Check status: done '+urlCount+'/'+totalUrls);
+                filterResults();
+                enableButtons();
+            } else {
+                console.log('Error: ', e);
+                updateProgress('Check status: ' + e.statusText);
+                enableButtons();
+            }
+        });
+        console.log('Checking asynchronously...');
+    });
+
+    $('#download-csv-button').click(downloadCSV);
+
+    $.get("http://localhost:8080/version", function(data) {
+        console.log(data);
+        $('#server-version-string').text(data);
+        $('#server-version').show();
+    });
+});
+</script>
+</head>
+<body>
+    <main role="main" class="container">
+        <h2>Check links here</h2>
+
+        <div class="container">
+            <textarea class="form-control" id="url-list-text" rows="5"></textarea>
+
+            <div class="d-flex flex-row mt-2 mb-2">
+                <button type="button" class="p-2 btn btn-primary mr-4" id="check-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check</button>
+                <button type="button" class="p-2 btn btn-primary mr-4" id="check-async-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check (async)</button>
+                <button type="button" class="p-2 btn btn-primary mr-4" id="download-csv-button" data-toggle="tooltip" data-placement="right" title="Download the results as CSV" disabled>Download CSV</button>
+                    <div class="p-2 form-check mr-4">
+                        <input type="checkbox" class="form-check-input" id="showSuccesses">
+                        <label class="form-check-label" for="showSuccesses">Show successes</label>
+                    </div>
+                    <div class="p-2 form-check mr-4">
+                        <input type="checkbox" class="form-check-input" id="invertFilter">
+                        <label class="form-check-label" for="invertFilter">Invert filter</label>
+                    </div>
+                <div id="check-status" class="p-2"></div>
+            </div>
+
+            <div>
+                <div class="form-group">
+                    <label for="filter-input">Results filter</label>
+                    <input type="text" class="form-control" id="filter-input" placeholder="URLs will match each word">
+                </div>
+
+                <div class="form-group">
+                    <label for="url-list">Results (sorted by status when the check is complete)</label>
+                    <ul id="url-list"></ul>
+                </div>
+
+                <div class="form-group" id="server-version" style="display: none;">
+                    <p>Server version: <span id="server-version-string">unknown</span></p>
+                </div>
+            </div>
+
+
+        </div>
+    </main>
+</body>
+</html>

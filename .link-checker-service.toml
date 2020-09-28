@@ -1,0 +1,66 @@
+# Copyright 2020 Siemens AG
+# This file is not subject to the MPLv2 license, and can be edited freely.
+
+# proxy = "http://<some-proxy>:<port>"
+
+# uncomment if CORS is undesired
+corsOrigins = [
+    "http://localhost:8080",
+    "http://localhost:8090",
+    "http://localhost:8091",
+    "http://localhost:8092"
+]
+
+maxConcurrentHTTPRequests = 200
+
+cacheExpirationInterval = "24h"
+cacheCleanupInterval = "48h"
+retryFailedAfter = "2m"
+
+# rate-limit requests by IP. Empty string for no limits
+IPRateLimit = ""
+# to limit, use a rate specification, e.g. 5-S (5 per second), 1000-H (1000 per hour)
+# IPRateLimit = "10-S"
+
+# set to 0 to disable URLs per request limit
+maxURLsInRequest = 2000
+
+# set to 0 to disable the rate limit per domain
+requestsPerSecondPerDomain = 10
+
+disableRequestLogging = false
+
+# see https://github.com/gobwas/glob pattern definitions
+# enable if necessary (will impact check performance)
+# domainBlacklistGlobs = [
+#    "some-dom?in.*"
+# ]
+
+# searchForBodyPatterns allows searching for patterns in response bodies
+# enabling searchForBodyPatterns will impact checker performance
+# this feature is only configurable via the config file
+searchForBodyPatterns = false
+
+[[bodyPatterns]]
+name = "authentication redirect"
+regex = "Authentication Redirect"
+
+[[bodyPatterns]]
+name = "login"
+regex = "Login Service"
+
+#[[bodyPatterns]]
+#name = "SPA"
+#regex = "\\\"main-"
+#
+#[[bodyPatterns]]
+#name = "google"
+#regex = "google"
+
+[HTTPClient]
+maxRedirectsCount = 15
+timeoutSeconds = 45
+userAgent = "lcs/0.9"
+browserUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36"
+acceptHeader = "*/*"
+skipCertificateCheck = false

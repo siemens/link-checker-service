@@ -1,0 +1,8 @@
+version: "3.7"
+services:
+  link-checker-service:
+    image: github.com/siemens/link-checker-service
+    build:
+      context: ./
+    ports:
+      - "8080:8080"

@@ -1,0 +1,11 @@
+.editorconfig
+.idea
+.git
+LICENSE
+README.md
+*.exe
+test
+.dockerignore
+.gitlab-ci.yml
+Dockerfile
+docker-compose.yml

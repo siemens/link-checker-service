@@ -1,0 +1,7 @@
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching
+http://awesome-scalability.com/
+http://cloudpatterns.org/mechanisms/failover_system
+https://engineering.imvu.com/2013/01/09/monitoring-delayed-replication-with-a-focus-on-mysql/
+http://elliot.land/post/sql-transaction-isolation-levels-explained
+https://airflow.apache.org/
+http://kajhsdjkadbf.com/123
