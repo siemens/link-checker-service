@@ -81,6 +81,12 @@ e.g. via [HTTPie](https://httpie.org/docs#explicit-json) on windows cmd
 http POST localhost:8080/checkUrls urls:="[{"""url""":"""https://google.com""","""context""":"""0"""},{"""url""":"""https://baskldjha.com/loaksd""","""context""":"""1"""}]"
 ```
 
+or in *sh:
+
+```
+http POST localhost:8080/checkUrls urls:='[{"url":"https://google.com","context":"0"},{"url":"https://baskldjha.com/loaksd","context":"1"}]'
+```
+
 The context field allows correlating the requests on the client side.
 
 Sample response:
