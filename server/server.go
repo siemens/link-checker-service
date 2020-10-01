@@ -29,7 +29,7 @@ import (
 const totalRequestDeadlineTimeoutSeconds = 15
 const largeRequestLoggingThreshold = 200
 
-// ServerOptions configures the web service instance
+// Options configures the web service instance
 type Options struct {
 	CORSOrigins           []string
 	IPRateLimit           string
