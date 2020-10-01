@@ -13,9 +13,9 @@ echo "testing"
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test -v ./...
 
 echo "building service"
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-lin .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-win.exe .
-CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-osx .
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/siemens/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-lin .
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/siemens/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-win.exe .
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/siemens/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-osx .
 
 ./link-checker-service-lin version
 ./link-checker-service-lin || true
