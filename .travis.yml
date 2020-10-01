@@ -23,7 +23,7 @@ script:
 - cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-osx .
 - cp $TRAVIS_BUILD_DIR/test/jquery_example/start_example.bat $TRAVIS_BUILD_DIR/
 before_deploy:
-  - git stash --all
+  - ls -rtla
 deploy:
   provider: releases
   skip_cleanup: true
