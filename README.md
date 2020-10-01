@@ -26,7 +26,7 @@ link-checker-service serve
 ```
 
 
-- download it from the [releases](/releases)
+- download it from the [releases](https://github.com/siemens/link-checker-service/releases/latest)
 
 
 - run the service dockerized, without installing Go:
@@ -36,7 +36,8 @@ link-checker-service serve
 docker-compose up --build
 ```
 
-or run from this source:
+
+- run from this source:
 
 ```
 go run . serve
