@@ -1,28 +1,46 @@
 language: go
-
 go:
-  - 1.15.x
-
+- 1.15.x
 env:
   global:
-    - VERSION=${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
-    - GOPATH=${TRAVIS_BUILD_DIR}/.go
-    - GOCACHE=${TRAVIS_BUILD_DIR}/.cache/go-build
-
+  - VERSION=${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
+  - GOPATH=${TRAVIS_BUILD_DIR}/.go
+  - GOCACHE=${TRAVIS_BUILD_DIR}/.cache/go-build
 cache:
   directories:
-    - ${TRAVIS_BUILD_DIR}/.go/pkg/mod/
-    - ${TRAVIS_BUILD_DIR}/.cache/go-build
-
+  - "${TRAVIS_BUILD_DIR}/.go/pkg/mod/"
+  - "${TRAVIS_BUILD_DIR}/.cache/go-build"
 script:
-  - go mod download
-  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test -v ./...
-  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-lin .
-  - CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-win.exe .
-  - CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION" -o link-checker-service-osx .
-  - ./link-checker-service-lin version
-  - ./link-checker-service-lin || true
-  - cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-lin .
-  - cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-win.exe .
-  - cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-osx .
-  - cp $TRAVIS_BUILD_DIR/test/jquery_example/start_example.bat $TRAVIS_BUILD_DIR/
+- go mod download
+- CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test -v ./...
+- CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION"
+  -o link-checker-service-lin .
+- CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION"
+  -o link-checker-service-win.exe .
+- CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X code.siemens.com/q2qsaa/link-checker-service/infrastructure.Version=$VERSION"
+  -o link-checker-service-osx .
+- "./link-checker-service-lin version"
+- "./link-checker-service-lin || true"
+- cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+  go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-lin .
+- cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=windows GOARCH=amd64
+  go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-win.exe .
+- cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=darwin GOARCH=amd64
+  go build -o $TRAVIS_BUILD_DIR/link-checker-example-ui-osx .
+- cp $TRAVIS_BUILD_DIR/test/jquery_example/start_example.bat $TRAVIS_BUILD_DIR/
+deploy:
+  provider: releases
+  api_key:
+    secure: mb/CIE4ujKCJAKNoHFPVsslUd+5mJp2VoIkjghbmcUfBcG92wugDeIIq+JiAdDiNdr1VgfnAHeZDMvxiB+/dzCY9POTq8nyR9EhZtvKqxCdG9L5ua0iV8i55JrN1g6c5RC7l22jf6ix8LqXqxmlBkG6kQ2j/s/jzVcFDntIfamxdUU99i2LS8l4XYR3/J9fd243/TLPriMgkpuOO0lyQ3ItFPRp9IAJdg5RZOtAJDUZTqM9+qrk9XNXG8Ee3SSXm5SA2wsAfqr222CxIhUkMD1KSp8bzH8Pa59bZDr1N8h+2JntVr64tRGbsX0CAYry3OypgcYqFMj7gZvxwBC2eyubZU/jCGq6k42pAboTZHelum1BwfOXvyLIImGpJg/LOtSjou2wZAzvsPK0Dqw36YRUxSyUsQ/77U2z4DX/lRTQZbtZ4RASUsTLE5DIos+lYlx+Zqp/B8ZJavN8UrAeKbuG2GjdwJWpeofKIE2XMu3P4EnoKke2kXqEbGTdk8iAEmPui79b1hMLQ0FZjKPw4BQqPESDTVYWUVu0nkha61AfCNt+HmuWFFjDn+CFr6HeBjXlRJo42rh0Mbul1hJ58rOwBzcA4jx7046jxPaVbWgb+ADnGmuzgCvX+NeJP+x6weBPk9fisW3+s8xyYSxZAbJdcNnRN40bL99eMpIBHauA=
+  file:
+    - link-checker-service-lin
+    - link-checker-service-win.exe
+    - link-checker-service-osx
+    - link-checker-example-ui-lin
+    - link-checker-example-ui-win.exe
+    - link-checker-example-ui-osx
+    - start_example.bat
+    - .link-checker-service.toml
+  on:
+    repo: siemens/link-checker-service
+    tags: true
