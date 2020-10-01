@@ -2,6 +2,8 @@
 
 The Link Checker web service runs cached and otherwise optimized broken link checks.
 
+[![Build Status](https://travis-ci.org/siemens/link-checker-service.svg?branch=master)](https://travis-ci.org/siemens/link-checker-service)
+
 Endpoints:
   - `/checkUrls` checks a batch at once
   - `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
