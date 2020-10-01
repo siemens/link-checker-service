@@ -2,7 +2,7 @@
 
 Notable changes will be documented here
 
-## 0.9.9
+## 0.9.10 preliminary
 
 - binaries: link-checker-service, sample UI, sample large list check
 - link-checker-service:

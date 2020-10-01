@@ -12,7 +12,8 @@ Endpoints:
 
 ## Quickstart
 
-get the binary into `$GOPATH/bin`
+- get the binary into `$GOPATH/bin`
+
 
 ```
 go get -u github.com/siemens/link-checker-service
@@ -24,7 +25,12 @@ go get -u github.com/siemens/link-checker-service
 link-checker-service serve
 ```
 
-or run the service dockerized, without installing Go:
+
+- download it from the [releases](/releases)
+
+
+- run the service dockerized, without installing Go:
+
 
 ```
 docker-compose up --build
