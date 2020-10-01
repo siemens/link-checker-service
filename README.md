@@ -2,7 +2,7 @@
 
 The Link Checker web service runs cached and otherwise optimized broken link checks.
 
-[![Build Status](https://travis-ci.org/siemens/link-checker-service.svg?branch=master)](https://travis-ci.org/siemens/link-checker-service)
+[![Build Status](https://travis-ci.org/siemens/link-checker-service.svg?branch=master)](https://travis-ci.org/siemens/link-checker-service) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service)
 
 Endpoints:
   - `/checkUrls` checks a batch at once
