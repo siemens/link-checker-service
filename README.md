@@ -8,10 +8,30 @@ Endpoints:
   - `/version` returns the server version
 
 
-## Installing
+## Quickstart
+
+get the binary into `$GOPATH/bin`
 
 ```
 go get -u github.com/siemens/link-checker-service
+```
+
+&darr;
+
+```
+link-checker-service serve
+```
+
+or run the service dockerized, without installing Go:
+
+```
+docker-compose up --build
+```
+
+or run from this source:
+
+```
+go run . serve
 ```
 
 ## Motivation
@@ -26,7 +46,9 @@ Thus, to minimize risk, a link checker should be isolated into a separate servic
 Checking whether a link is broken seems like a trivial task, but consider checking a thousand links a thousand times.
 Several optimizations and server, gateways, CDN or proxy implementation peculiarity work-arounds will need to be applied. This repository contains an implementation of such service.
 
-## Example Request
+## Usage
+
+### Example Request
 
 Start the server, e.g. `link-checker-service serve`, and send the following request body to `http://localhost:8080/checkUrls`:
 
@@ -81,6 +103,25 @@ Sample response:
 }
 ```
 
+### Large Requests Using JSON Streaming
+
+JSON Streaming can be used to optimize the client user experience, so that the client
+does not have to wait for the whole check result to complete to render.
+
+In the sample HTTPie request, post the streaming request to the `/checkUrls/stream` endpoint:
+```
+http --stream  POST  localhost:8080/checkUrls/stream ...
+```
+
+URL check result objects will be streamed continuously, delimited by a newline character `\n`, as they become available.
+These can then be rendered immediately. E.g. see the [sample UI](test/jquery_example/public/index.html).
+
+### Sample Front-Ends
+
+- For a programmatic large URL list check, see [test/large_list_check](test/large_list_check), which crawls a markdown page for URLs and checks them via the running link checker service
+- For an example of a simple page to check links and display the results using jQuery using the service, see [test/jquery_example](test/jquery_example)
+
+
 ## Configuration
 
 For up-to-date help, check `link-checker-service help` or `link-checker-service help <command>`.
@@ -134,24 +175,6 @@ regex = "google"
 The names of the found patterns will be available in the URL check results.
 
 
-## Development
-
-### CI
-
-[CI](https://github.com/siemens/link-checker-service/-/pipelines) creates executables for Linux/amd64 and Windows
-
-### Running the Service
-
-```
-go run . serve
-```
-
-or dockerized, without installing Go:
-
-```
-docker-compose up
-```
-
 ### Using a Custom Configuration
 
 e.g. when a proxy is needed for the HTTP client, see the sample [.link-checker-service.toml](.link-checker-service.toml),
@@ -159,90 +182,13 @@ and start the server with the argument: `--config .link-checker-service.toml`
 
 alternatively, set the client proxy via an environment variable: `LCS_PROXY=http://myproxy:8080`
 
-### Running the Tests
+## Development
 
-```
-go test -v ./...
-```
+see [development.md](development.md)
 
-### Generating Serializers
+## Request Optimization Architecture
 
-```
-go generate -v ./...
-```
-
-
-### Load Testing
-
-via [hey](https://github.com/rakyll/hey):
-
-```
-hey -m POST -n 10000 -c 300 -T "application/json" -t 30 -D sample_request_body.json http://localhost:8080/checkUrls
-```
-
-where the `-c 300` is the client concurrency setting, and `-n 10000` is the approximate total number of requests to fire.
-
-01.09.2020:
-
-```
->hey -m POST -n 10000 -c 200 -T "application/json" -t 30 -D sample_request_body.json http://localhost:8080/checkUrls
-
-Summary:
-  Total:        0.2867 secs
-  Slowest:      0.0933 secs
-  Fastest:      0.0002 secs
-  Average:      0.0052 secs
-  Requests/sec: 34879.9936
-
-  Total data:   3950000 bytes
-  Size/request: 395 bytes
-
-Response time histogram:
-  0.000 [1]     |
-  0.009 [8720]  |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-  0.019 [988]   |■■■■■
-  0.028 [83]    |
-  0.037 [47]    |
-  0.047 [57]    |
-  0.056 [29]    |
-  0.065 [27]    |
-  0.075 [15]    |
-  0.084 [11]    |
-  0.093 [22]    |
-
-
-Latency distribution:
-  10% in 0.0004 secs
-  25% in 0.0011 secs
-  50% in 0.0032 secs
-  75% in 0.0060 secs
-  90% in 0.0109 secs
-  95% in 0.0146 secs
-  99% in 0.0485 secs
-
-Details (average, fastest, slowest):
-  DNS+dialup:   0.0004 secs, 0.0002 secs, 0.0933 secs
-  DNS-lookup:   0.0004 secs, 0.0000 secs, 0.0262 secs
-  req write:    0.0000 secs, 0.0000 secs, 0.0080 secs
-  resp wait:    0.0043 secs, 0.0001 secs, 0.0632 secs
-  resp read:    0.0003 secs, 0.0000 secs, 0.0117 secs
-
-Status code distribution:
-  [200] 10000 responses
-```
-
-### Request Optimization Architecture
-
-```mermaid
-graph TD
-  Request --> Handler[["Handler (parallel)"]]
-  Handler --> CachedURLChecker[[Cached URL Checker]]
-  CachedURLChecker --> CCLimitedURLChecker[[Concurrency-limited URL checker]]
-  DomainRateLimitedChecker
-  CCLimitedURLChecker --> DomainRateLimitedChecker[[Domain-rate-limited checker]]
-  DomainRateLimitedChecker --> URLCheckerClient[[HTTP URL Checker Client]]
-  URLCheckerClient --> URL(URL)
-```
+![optimization chain](docs/img/optimization-chain.svg)
 
 Rate limiting based on IPs can be turned on in the configuration via a rate specification.
 See [ulule/limiter](https://github.com/ulule/limiter).
@@ -257,28 +203,10 @@ Status code distribution:
   [429] 990 responses
 ```
 
-### Large Requests Using JSON Streaming
-
-JSON Streaming can be used to optimize the client user experience, so that the client
-does not have to wait for the whole check result to complete to render.
-
-In the sample HTTPie request, post the streaming request to the `/checkUrls/stream` endpoint:
-```
-http --stream  POST  localhost:8080/checkUrls/stream ...
-```
-
-URL check result objects will be streamed continuously, delimited by a newline character `\n`, as they become available.
-These can then be rendered immediately. E.g. see the [sample UI](test/jquery_example/public/index.html).
-
-### Dependencies
+## Dependencies
 
 - Go (1.15)
 - see [go.mod](go.mod)
-
-### Samples
-
-- [test/large_list_check](test/large_list_check) - crawls a markdown page for URLs and checks them via the running link checker service
-- [test/jquery_example](test/jquery_example) - example usage of the service from a simple page to check links and display the results using jQuery
 
 ## Alternatives
 
