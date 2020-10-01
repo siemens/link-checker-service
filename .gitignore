@@ -143,3 +143,5 @@ vcs.xml
 
 *.bak
 debug.log
+link-checker-service
+test/jquery_example/jquery_example
