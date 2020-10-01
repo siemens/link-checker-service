@@ -4,12 +4,6 @@ go:
 env:
   global:
   - VERSION=${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
-  - GOPATH=${TRAVIS_BUILD_DIR}/.go
-  - GOCACHE=${TRAVIS_BUILD_DIR}/.cache/go-build
-cache:
-  directories:
-  - "${TRAVIS_BUILD_DIR}/.go/pkg/mod/"
-  - "${TRAVIS_BUILD_DIR}/.cache/go-build"
 script:
 - go mod download
 - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test -v ./...
