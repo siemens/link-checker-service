@@ -12,7 +12,8 @@ import (
 )
 
 var corsOrigins []string = nil
-// IPRateLimit, e.g. "100-M" for 100 requests/minute
+
+// IPRateLimit e.g. for 100 requests/minute: "100-M"
 var IPRateLimit = ""
 var maxURLsInRequest uint = 0
 var disableRequestLogging = false
