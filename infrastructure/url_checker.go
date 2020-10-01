@@ -37,6 +37,7 @@ type URLCheckResult struct {
 	BodyPatternsFound     []string
 }
 
+// BodyPatternConfig is unmarshalled from the configuration file
 type BodyPatternConfig struct {
 	Name  string
 	Regex string
@@ -98,7 +99,6 @@ func getURLCheckerSettings() urlCheckerSettings {
 		_, err := netUrl.Parse(proxyURL)
 		if err != nil {
 			log.Printf("Rejected proxyURL: %v", proxyURL)
-			proxyURL = ""
 		} else {
 			log.Printf("URLCheckerClient is using a proxy: %v", proxyURL)
 			s.ProxyURL = proxyURL

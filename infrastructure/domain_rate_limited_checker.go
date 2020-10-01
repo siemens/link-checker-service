@@ -35,6 +35,7 @@ func NewDomainRateLimitedChecker(ratePerSecond rate.Limit) *DomainRateLimitedChe
 	}
 }
 
+// CheckURL checks the desired URL applying rate limits per domain
 func (c *DomainRateLimitedChecker) CheckURL(ctx context.Context, url string) *URLCheckResult {
 	// if there's no limiting, just check
 	if c.ratePerSecond == 0 {
