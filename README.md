@@ -233,16 +233,7 @@ Status code distribution:
 
 ### Request Optimization Architecture
 
-```mermaid
-graph TD
-  Request --> Handler[["Handler (parallel)"]]
-  Handler --> CachedURLChecker[[Cached URL Checker]]
-  CachedURLChecker --> CCLimitedURLChecker[[Concurrency-limited URL checker]]
-  DomainRateLimitedChecker
-  CCLimitedURLChecker --> DomainRateLimitedChecker[[Domain-rate-limited checker]]
-  DomainRateLimitedChecker --> URLCheckerClient[[HTTP URL Checker Client]]
-  URLCheckerClient --> URL(URL)
-```
+![optimization chain](docs/img/optimization-chain.svg)
 
 Rate limiting based on IPs can be turned on in the configuration via a rate specification.
 See [ulule/limiter](https://github.com/ulule/limiter).
