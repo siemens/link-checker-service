@@ -7,6 +7,7 @@ Notable changes will be documented here
 - binaries: link-checker-service, sample UI, sample large list check
 - link-checker-service:
   - configurability
+  - response-specific caching of results
   - aborting processing on client disconnected
   - rate limiting per domain
   - concurrency limit
