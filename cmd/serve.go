@@ -58,11 +58,10 @@ func fetchConfig() {
 }
 
 func init() {
-	flags := serveCmd.Flags()
-	flags.StringSliceVarP(&corsOrigins, "corsOrigins", "o", nil,
+	serveCmd.PersistentFlags().StringSliceVarP(&corsOrigins, "corsOrigins", "o", nil,
 		"provide a list of CORS origins to enable CORS headers, e.g. '-o http://localhost:8080 -o http://localhost:8090")
 
-	flags.StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
+	serveCmd.Flags().StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
 
 	serveCmd.PersistentFlags().BoolVarP(&disableRequestLogging, "disableRequestLogging", "s", false, "disable request logging")
 

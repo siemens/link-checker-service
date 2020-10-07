@@ -3,6 +3,8 @@ module github.com/siemens/link-checker-service
 go 1.15
 
 require (
+	github.com/aws/aws-lambda-go v1.19.1
+	github.com/awslabs/aws-lambda-go-api-proxy v0.8.1
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.6.3
@@ -32,5 +34,4 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/ini.v1 v1.61.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
