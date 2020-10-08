@@ -2,7 +2,12 @@
 
 Notable changes will be documented here
 
-## 0.9.10 preliminary
+## 0.9.11
+
+- link-checker-service:
+  - `serve -a <addr>` allows customizing the bind address, e.g. localhost-only: `127.0.0.1:8080`
+
+## 0.9.10
 
 - binaries: link-checker-service, sample UI, sample large list check
 - link-checker-service:

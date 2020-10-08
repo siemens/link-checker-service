@@ -143,10 +143,11 @@ For up-to-date help, check `link-checker-service help` or `link-checker-service 
 
 To override the service port, define the `PORT` environment variable.
 
+To bind to another address, configure the `bindAddress` option, i.e.: `... serve -a 127.0.0.1:8080`
+
 ### Config File
 
 A sample configuration file [configuration file](.link-checker-service.toml) is available, with most possible configuration options listed.
-
 
 Start the app with the path to the configuration file: `--config <path-to-config-toml>`.
 

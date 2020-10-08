@@ -36,6 +36,7 @@ type Options struct {
 	MaxURLsInRequest      uint
 	DisableRequestLogging bool
 	DomainBlacklistGlobs  []string
+	BindAddress           string
 }
 
 // Server starts an instance of the link checker service
@@ -98,8 +99,15 @@ func (s *Server) Detail() *gin.Engine {
 // Run starts the service instance (binds a port)
 // set the PORT environment variable for a different port to bind at
 func (s *Server) Run() {
-	// listen and serve on 0.0.0.0:8080
-	if err := s.server.Run(); err != nil {
+	var err error
+	if s.options.BindAddress!="" {
+		// custom bind address, e.g. 0.0.0.0:4444
+		err = s.server.Run(s.options.BindAddress)
+	} else {
+		// default behavior: listen and serve on 0.0.0.0:${PORT:-8080}
+		err = s.server.Run()
+	}
+	if err != nil {
 		log.Fatalf("Could not start the server: %v", err)
 	}
 }

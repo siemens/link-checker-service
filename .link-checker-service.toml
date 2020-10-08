@@ -3,6 +3,9 @@
 
 # proxy = "http://<some-proxy>:<port>"
 
+# uncomment to bind to a custom address
+# bindAddress = "127.0.0.1:8080"
+
 # uncomment if CORS is undesired
 corsOrigins = [
     "http://localhost:8080",

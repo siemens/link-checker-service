@@ -19,6 +19,8 @@ var maxURLsInRequest uint = 0
 var disableRequestLogging = false
 var domainBlacklistGlobs []string
 
+const bindAddressKey = "bindAddress"
+
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts the link checker web server",
@@ -31,6 +33,7 @@ var serveCmd = &cobra.Command{
 			MaxURLsInRequest:      maxURLsInRequest,
 			DisableRequestLogging: disableRequestLogging,
 			DomainBlacklistGlobs:  domainBlacklistGlobs,
+			BindAddress:           viper.GetString(bindAddressKey),
 		})
 		server.Run()
 	},
@@ -61,6 +64,10 @@ func init() {
 	flags := serveCmd.Flags()
 	flags.StringSliceVarP(&corsOrigins, "corsOrigins", "o", nil,
 		"provide a list of CORS origins to enable CORS headers, e.g. '-o http://localhost:8080 -o http://localhost:8090")
+
+	flags.StringP(bindAddressKey, "a", "",
+		"bind to a different address other than `:8080`, i.e. 0.0.0.0:4444 or 127.0.0.1:4444")
+	_ = viper.BindPFlag(bindAddressKey, flags.Lookup(bindAddressKey))
 
 	flags.StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
 
