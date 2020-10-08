@@ -70,3 +70,14 @@ Details (average, fastest, slowest):
 Status code distribution:
   [200] 10000 responses
 ```
+
+## Releases
+
+- releases are automated via [.travis.yml](.travis.yml) deployment
+- locally:
+  - assuming a green CI `master` branch
+  - test (`go test ./...`)
+  - `git tag v<version> -m 'v<version>'`
+  - `git push origin v<version>`
+  - edit the release page upon artifact creation, e.g. `see [CHANGES](CHANGES.md)`
+
