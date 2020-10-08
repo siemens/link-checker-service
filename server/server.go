@@ -100,7 +100,7 @@ func (s *Server) Detail() *gin.Engine {
 // set the PORT environment variable for a different port to bind at
 func (s *Server) Run() {
 	var err error
-	if s.options.BindAddress!="" {
+	if s.options.BindAddress != "" {
 		// custom bind address, e.g. 0.0.0.0:4444
 		err = s.server.Run(s.options.BindAddress)
 	} else {
