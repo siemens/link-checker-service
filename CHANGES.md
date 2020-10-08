@@ -2,6 +2,10 @@
 
 Notable changes will be documented here
 
+## 0.9.12
+
+- new release packaging
+
 ## 0.9.11
 
 - link-checker-service:

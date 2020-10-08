@@ -28,3 +28,17 @@ cd $TRAVIS_BUILD_DIR/test/jquery_example && CGO_ENABLED=0 GOOS=darwin GOARCH=amd
 cp $TRAVIS_BUILD_DIR/test/jquery_example/start_example.bat $TRAVIS_BUILD_DIR/
 
 cd $TRAVIS_BUILD_DIR
+
+echo "archiving"
+
+mv link-checker-example-ui-win.exe link-checker-example-ui.exe
+mv link-checker-service-win.exe link-checker-service.exe
+zip link-checker-service-win.zip *.exe README.md start_example.bat .link-checker-service.toml
+
+mv link-checker-example-ui-lin link-checker-example-ui
+mv link-checker-service-lin link-checker-service
+tar cvzf link-checker-service-lin.tgz link-checker-service link-checker-example-ui README.md .link-checker-service.toml
+
+mv link-checker-example-ui-osx link-checker-example-ui
+mv link-checker-service-osx link-checker-service
+tar cvzf link-checker-service-osx.tgz link-checker-service link-checker-example-ui README.md .link-checker-service.toml
