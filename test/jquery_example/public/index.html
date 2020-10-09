@@ -42,7 +42,8 @@ function updateUrlList(text) {
         // tag the list items
         $("#url-list").append('<li data-check-result="" id="url-to-check-'+i+'" data-href="'+url+'"><a href="'+url+'">'+url+'</a> <span data-toggle="tooltip" title="" data-placement="right" class="url-check-result" id="url-check-result-'+i+'"></span></li>');
     });
-    $('#check-button').text('Check ('+urls.length+')')
+    $('#check-button').text('Check ('+urls.length+')');
+    $('#download-csv-button').prop('disabled', true);
     return urls;
 }
 
