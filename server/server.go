@@ -290,6 +290,7 @@ func (s *Server) checkURL(ctx context.Context, url URLRequest) URLStatusResponse
 		Error:                 errorString,
 		FetchedAtEpochSeconds: checkResult.FetchedAtEpochSeconds,
 		BodyPatternsFound:     checkResult.BodyPatternsFound,
+		RemoteAddr:            checkResult.RemoteAddr,
 	}
 	return urlStatus
 }
