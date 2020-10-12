@@ -10,7 +10,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"net/http/httptrace"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -35,6 +38,7 @@ type URLCheckResult struct {
 	Error                 error
 	FetchedAtEpochSeconds int64
 	BodyPatternsFound     []string
+	RemoteAddr            string
 }
 
 // BodyPatternConfig is unmarshalled from the configuration file
@@ -58,6 +62,7 @@ type urlCheckerSettings struct {
 	SkipCertificateCheck  bool
 	SearchForBodyPatterns bool
 	BodyPatterns          []bodyPattern
+	EnableRequestTracing  bool
 }
 
 // URLChecker interface that all layers should conform to
@@ -117,6 +122,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 		s.AcceptHeader = v
 	}
 	s.SkipCertificateCheck = viper.GetBool("HTTPClient.skipCertificateCheck")
+	s.EnableRequestTracing = viper.GetBool("HTTPClient.enableRequestTracing")
 
 	log.Printf("HTTP client MaxRedirectsCount: %v", s.MaxRedirectsCount)
 	log.Printf("HTTP client TimeoutSeconds: %v", s.TimeoutSeconds)
@@ -124,6 +130,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 	log.Printf("HTTP client BrowserUserAgent: %v", s.BrowserUserAgent)
 	log.Printf("HTTP client AcceptHeader: %v", s.AcceptHeader)
 	log.Printf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
+	log.Printf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
 
 	// advanced configuration feature: only configurable via the config file
 	s.SearchForBodyPatterns = viper.GetBool("searchForBodyPatterns")
@@ -162,7 +169,26 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 	return res
 }
 
-func (c *URLCheckerClient) checkURL(ctx context.Context, url string, client *resty.Client) (*URLCheckResult, bool) {
+func normalizeAddressOf(input string) string {
+	u, err := url.Parse(input)
+	if err != nil {
+		// bad urls will be handled later by the client
+		return "<bad url>"
+	}
+	port:=u.Port()
+	if port=="" {
+		switch u.Scheme {
+		case "http":
+		 	port = "80"
+		case "https":
+			port = "443"
+		}
+	}
+
+	return u.Host + ":" + port
+}
+
+func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, client *resty.Client) (*URLCheckResult, bool) {
 	select {
 	case <-ctx.Done():
 		return &URLCheckResult{
@@ -175,20 +201,38 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, url string, client *res
 		// do not block if not cancelled
 	}
 
+	remoteAddr := ""
+
+	if c.settings.EnableRequestTracing {
+		trace := &httptrace.ClientTrace{
+			ConnectDone: func(network, _addr string, err error) {
+				if err == nil {
+					if addr, err := net.ResolveTCPAddr(network, normalizeAddressOf(urlToCheck)); err == nil {
+						remoteAddr = addr.String()
+					} else {
+						log.Print(err)
+					}
+				}
+			},
+		}
+		ctx = httptrace.WithClientTrace(ctx, trace)
+	}
+
 	response, err := client.R().
 		SetHeader("Accept", c.settings.AcceptHeader).
 		SetHeader("User-Agent", c.settings.UserAgent).
-		Head(url)
+		SetContext(ctx).
+		Head(urlToCheck)
 
-	res := c.processResponse(url, response, err)
+	res := c.processResponse(urlToCheck, response, err)
 
 	// Some sites don't allow robot user agents
 	if res.Code == http.StatusForbidden {
 		response, err = client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
 			SetHeader("User-Agent", c.settings.BrowserUserAgent).
-			Head(url)
-		res = c.processResponse(url, response, err)
+			Head(urlToCheck)
+		res = c.processResponse(urlToCheck, response, err)
 	}
 
 	var body string
@@ -201,8 +245,8 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, url string, client *res
 		response, err = client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
 			// browser agent as last resort?
-			Get(url)
-		res = c.processResponse(url, response, err)
+			Get(urlToCheck)
+		res = c.processResponse(urlToCheck, response, err)
 		if c.settings.SearchForBodyPatterns && response != nil {
 			body = response.String()
 		}
@@ -211,6 +255,9 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, url string, client *res
 	if c.settings.SearchForBodyPatterns {
 		res = c.searchForBodyPatterns(res, body)
 	}
+
+	res.RemoteAddr = remoteAddr
+
 	return res, false
 }
 

@@ -41,11 +41,26 @@ func TestSearchingForBodyPatterns(t *testing.T) {
 	assert.Equal(t, "google", res.BodyPatternsFound[0], "should have found at least one mention of google")
 }
 
+func TestTracingRequests(t *testing.T) {
+	setUpViperTestConfiguration()
+	res := NewURLCheckerClient().CheckURL(context.Background(), "https://google.com")
+	assert.Nil(t, res.Error)
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, res.RemoteAddr, "")
+
+	viper.Set("HTTPClient.enableRequestTracing", true)
+	res = NewURLCheckerClient().CheckURL(context.Background(), "https://google.com")
+	assert.Nil(t, res.Error)
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.NotEqual(t, res.RemoteAddr, "")
+}
+
 func setUpViperTestConfiguration() {
 	viper.SetEnvPrefix("LCS")
 	viper.Set("proxy", os.Getenv("LCS_PROXY"))
 	viper.Set("HTTPClient.timeoutSeconds", uint(15))
 	viper.Set("HTTPClient.maxRedirectsCount", uint(15))
+	viper.Set("HTTPClient.enableRequestTracing", false)
 	viper.Set("searchForBodyPatterns", false)
 	patterns := []struct {
 		Name  string

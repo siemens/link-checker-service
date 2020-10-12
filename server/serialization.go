@@ -30,6 +30,8 @@ type URLStatusResponse struct {
 	FetchedAtEpochSeconds int64 `json:"timestamp"`
 	// BodyPatternsFound will be filled with the configured regex patterns found in the response body
 	BodyPatternsFound []string `json:"body_patterns_found"`
+	// RemoteAddr is filled with the resolved address when `enableRequestTracing` is configured
+	RemoteAddr string `json:"remote_addr,omitempty"`
 }
 
 // CheckURLsResponse is a JSON structure for the bulk URL check response

@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.13
+
+- link-checker-service:
+  - optional: resolve remote addresses
+- sample UI:
+  - disable the CSV download button on no check status
+  - configurable service URL in the sample UI
+
 ## 0.9.12
 
 - new release packaging

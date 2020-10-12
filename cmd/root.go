@@ -41,6 +41,7 @@ const (
 	browserUserAgentKey     = "browserUserAgent"
 	acceptHeaderKey         = "acceptHeader"
 	skipCertificateCheckKey = "skipCertificateCheck"
+	enableRequestTracingKey = "enableRequestTracing"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -91,7 +92,8 @@ func init() {
 	_ = viper.BindPFlag(httpClientMapKey+acceptHeaderKey, rootCmd.PersistentFlags().Lookup(acceptHeaderKey))
 	rootCmd.PersistentFlags().Bool(skipCertificateCheckKey, false, "HTTP client: skip verifying server certificates")
 	_ = viper.BindPFlag(httpClientMapKey+skipCertificateCheckKey, rootCmd.PersistentFlags().Lookup(skipCertificateCheckKey))
-
+	rootCmd.PersistentFlags().Bool(enableRequestTracingKey, false, "HTTP client: enable request tracing")
+	_ = viper.BindPFlag(httpClientMapKey+enableRequestTracingKey, rootCmd.PersistentFlags().Lookup(enableRequestTracingKey))
 	// service
 	rootCmd.PersistentFlags().UintP(maxConcurrentHTTPRequestsKey, "c", 256, "maximum number of total concurrent HTTP requests")
 	_ = viper.BindPFlag(maxConcurrentHTTPRequestsKey, rootCmd.PersistentFlags().Lookup(maxConcurrentHTTPRequestsKey))
