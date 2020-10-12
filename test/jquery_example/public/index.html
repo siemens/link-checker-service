@@ -204,6 +204,32 @@ function sortResultsBystatus() {
     sortedResults.appendTo('#url-list');
 }
 
+function updateServiceVersion() {
+    var serverVersionDiv = $('#server-version');
+    var serverVersionInput = $('#server-version-string');
+    $.ajax({
+        url: getLinkCheckerBaseURL()+"/version",
+        success: function(data){
+            serverVersionInput.text(data);
+            serverVersionDiv.show();
+        },
+        timeout: 10000 /*ms*/
+    }).fail(function(err) {
+        serverVersionInput.text(err.statusText);
+        serverVersionDiv.show();
+    });
+}
+
+function getLinkCheckerBaseURL() {
+    var baseURL = $("#service-url-input").val();
+
+    if (baseURL==="") {
+        baseURL = "http://localhost:8080";
+    }
+
+    return baseURL;
+}
+
 $(document).ready(function(){
     var urls = [];
 
@@ -220,6 +246,14 @@ $(document).ready(function(){
     filterInput.keypress(function (e) {
         if (e.which === 13 /*enter*/) {
             filterResults();
+        }
+    });
+
+    var serviceURLInput = $('#service-url-input');
+
+    serviceURLInput.keypress(function (e) {
+        if (e.which === 13 /*enter*/) {
+            updateServiceVersion();
         }
     });
 
@@ -250,7 +284,7 @@ $(document).ready(function(){
         var requestBody = JSON.stringify({urls: requestData});
         updateProgress('Check status: requested...');
         $.post(
-            "http://localhost:8080/checkUrls",
+            getLinkCheckerBaseURL()+"/checkUrls",
             requestBody,
             function(result){
                 updateProgress('Check status: '+result.result);
@@ -259,10 +293,12 @@ $(document).ready(function(){
                 filterResults();
                 enableButtons();
                 getWindow().results = result.urls;
+                updateServiceVersion();
             },
             "json"
         ).fail(function(err){
             updateProgress('Check status: '+err.statusText);
+            updateServiceVersion();
             enableButtons();
         });
     });
@@ -287,7 +323,7 @@ $(document).ready(function(){
         var chunkAttempts = 0;
         $.ajax({
             type: 'POST',
-            url: 'http://localhost:8080/checkUrls/stream',
+            url: getLinkCheckerBaseURL()+'/checkUrls/stream',
             data: requestBody,
             dataType: 'json',
             processData: false,
@@ -328,6 +364,7 @@ $(document).ready(function(){
             updateProgress('Check status: done '+urlCount+'/'+totalUrls);
             filterResults();
             enableButtons();
+            updateServiceVersion();
         }).fail(function(e){
             if (e.statusText.toLowerCase()==='ok') {
                 updateProgress('Check status: done '+urlCount+'/'+totalUrls);
@@ -338,17 +375,14 @@ $(document).ready(function(){
                 updateProgress('Check status: ' + e.statusText);
                 enableButtons();
             }
+            updateServiceVersion();
         });
         console.log('Checking asynchronously...');
     });
 
     $('#download-csv-button').click(downloadCSV);
 
-    $.get("http://localhost:8080/version", function(data) {
-        console.log(data);
-        $('#server-version-string').text(data);
-        $('#server-version').show();
-    });
+    updateServiceVersion();
 });
 </script>
 </head>
@@ -383,6 +417,11 @@ $(document).ready(function(){
                 <div class="form-group">
                     <label for="url-list">Results (sorted by status when the check is complete)</label>
                     <ul id="url-list"></ul>
+                </div>
+
+                <div class="form-group">
+                    <label for="service-url-input">Service URL</label>
+                    <input type="url" class="form-control" id="service-url-input" placeholder="Enter the Link Checker Service URL here" value="http://localhost:8080">
                 </div>
 
                 <div class="form-group" id="server-version" style="display: none;">
