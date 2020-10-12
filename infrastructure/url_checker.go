@@ -175,11 +175,11 @@ func normalizeAddressOf(input string) string {
 		// bad urls will be handled later by the client
 		return "<bad url>"
 	}
-	port:=u.Port()
-	if port=="" {
+	port := u.Port()
+	if port == "" {
 		switch u.Scheme {
 		case "http":
-		 	port = "80"
+			port = "80"
 		case "https":
 			port = "443"
 		}
