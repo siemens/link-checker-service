@@ -206,25 +206,15 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 	}
 
 	addrToResolve := normalizeAddressOf(urlToCheck)
-	remoteAddr := ""
-
-	if resolved, found := c.dnsCache.Get(addrToResolve); found {
-		remoteAddr = resolved.(string)
-	}
+	remoteAddr := c.cachedRemoteAddr(addrToResolve)
 
 	if c.settings.EnableRequestTracing &&
 		remoteAddr == "" /*enable tracing only if remoteAddr hasn't been resolved yet */ {
+
+		// remoteAddr must be captured from the encompassing scope in the closures below
 		trace := &httptrace.ClientTrace{
 			ConnectDone: func(network, _addr string, err error) {
-				if err == nil {
-					if addr, err := net.ResolveTCPAddr(network, addrToResolve); err == nil {
-						// this may be called multiple times: last invocation wins
-						remoteAddr = addr.String()
-						c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
-					} else {
-						log.Print(err)
-					}
-				}
+				remoteAddr = c.resolveAndCacheTCPAddr(network, err, addrToResolve)
 			},
 			DNSDone: func(info httptrace.DNSDoneInfo) {
 				if remoteAddr == "" {
@@ -236,33 +226,26 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 		ctx = httptrace.WithClientTrace(ctx, trace)
 	}
 
-	response, err := client.R().
-		SetHeader("Accept", c.settings.AcceptHeader).
-		SetHeader("User-Agent", c.settings.UserAgent).
-		SetContext(ctx).
-		Head(urlToCheck)
+	res := c.tryHeadRequestDefault(ctx, urlToCheck, client)
+	res = c.tryHeadRequestAsBrowserIfForbidden(ctx, urlToCheck, client, res)
+	res = c.tryGetRequestAndProcessResponseBody(ctx, urlToCheck, client, res)
 
-	res := c.processResponse(urlToCheck, response, err)
+	res.RemoteAddr = remoteAddr
 
-	// Some sites don't allow robot user agents
-	if res.Code == http.StatusForbidden {
-		response, err = client.R().
-			SetHeader("Accept", c.settings.AcceptHeader).
-			SetHeader("User-Agent", c.settings.BrowserUserAgent).
-			Head(urlToCheck)
-		res = c.processResponse(urlToCheck, response, err)
-	}
+	return res, false
+}
 
+func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Context, urlToCheck string, client *resty.Client, res *URLCheckResult) *URLCheckResult {
 	var body string
 	// some sites don't allow HEAD requests, try a GET
 	if c.settings.SearchForBodyPatterns ||
 		res.Code == http.StatusForbidden ||
 		res.Code == http.StatusMethodNotAllowed ||
 		res.Code == http.StatusServiceUnavailable ||
-		res.Code == http.StatusNotFound /* e.g. www.tripadvisor.com */ {
-		response, err = client.R().
+		res.Code == http.StatusNotFound {
+		response, err := client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
-			// browser agent as last resort?
+			SetContext(ctx).
 			Get(urlToCheck)
 		res = c.processResponse(urlToCheck, response, err)
 		if c.settings.SearchForBodyPatterns && response != nil {
@@ -273,10 +256,41 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 	if c.settings.SearchForBodyPatterns {
 		res = c.searchForBodyPatterns(res, body)
 	}
+	return res
+}
 
-	res.RemoteAddr = remoteAddr
+func (c *URLCheckerClient) tryHeadRequestDefault(ctx context.Context, urlToCheck string, client *resty.Client) *URLCheckResult {
+	response, err := client.R().
+		SetHeader("Accept", c.settings.AcceptHeader).
+		SetHeader("User-Agent", c.settings.UserAgent).
+		SetContext(ctx).
+		Head(urlToCheck)
 
-	return res, false
+	res := c.processResponse(urlToCheck, response, err)
+	return res
+}
+
+func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, addrToResolve string) string {
+	remoteAddr := ""
+	if err == nil {
+		if addr, err := net.ResolveTCPAddr(network, addrToResolve); err == nil {
+			// this may be called multiple times: last invocation wins
+			remoteAddr = addr.String()
+			c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
+		} else {
+			log.Printf("ERROR in resolveAndCacheTCPAddr: %v", err)
+		}
+	}
+	return remoteAddr
+}
+
+func (c *URLCheckerClient) cachedRemoteAddr(addrToResolve string) string {
+	remoteAddr := ""
+
+	if resolved, found := c.dnsCache.Get(addrToResolve); found {
+		remoteAddr = resolved.(string)
+	}
+	return remoteAddr
 }
 
 func getDNSAddressesAsString(addrs []net.IPAddr) string {
@@ -347,12 +361,24 @@ func (c *URLCheckerClient) processResponse(url string, response *resty.Response,
 	}
 }
 
-// to do
 func (c *URLCheckerClient) searchForBodyPatterns(res *URLCheckResult, body string) *URLCheckResult {
 	for _, pattern := range c.settings.BodyPatterns {
 		if pattern.pattern.MatchString(body) {
 			res.BodyPatternsFound = append(res.BodyPatternsFound, pattern.name)
 		}
+	}
+	return res
+}
+
+func (c *URLCheckerClient) tryHeadRequestAsBrowserIfForbidden(ctx context.Context, urlToCheck string, client *resty.Client, res *URLCheckResult) *URLCheckResult {
+	// Some sites don't allow robot user agents
+	if res.Code == http.StatusForbidden {
+		response, err := client.R().
+			SetHeader("Accept", c.settings.AcceptHeader).
+			SetHeader("User-Agent", c.settings.BrowserUserAgent).
+			SetContext(ctx).
+			Head(urlToCheck)
+		res = c.processResponse(urlToCheck, response, err)
 	}
 	return res
 }
