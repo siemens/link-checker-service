@@ -18,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/patrickmn/go-cache"
+
 	"github.com/spf13/viper"
 
 	netUrl "net/url"
@@ -75,6 +77,7 @@ type URLCheckerClient struct {
 	client             *resty.Client
 	clientWithoutProxy *resty.Client
 	settings           urlCheckerSettings
+	dnsCache           *cache.Cache
 }
 
 // NewURLCheckerClient instantiates a new basic URL checking client
@@ -87,6 +90,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 		client:             buildClient(urlCheckerSettings),
 		clientWithoutProxy: buildClient(urlCheckerSettingsNoProxy),
 		settings:           urlCheckerSettings,
+		dnsCache:           cache.New(defaultCacheExpirationInterval, defaultCacheCleanupInterval),
 	}
 }
 
@@ -201,17 +205,31 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 		// do not block if not cancelled
 	}
 
+	addrToResolve := normalizeAddressOf(urlToCheck)
 	remoteAddr := ""
 
-	if c.settings.EnableRequestTracing {
+	if resolved, found := c.dnsCache.Get(addrToResolve); found {
+		remoteAddr = resolved.(string)
+	}
+
+	if c.settings.EnableRequestTracing &&
+		remoteAddr == "" /*enable tracing only if remoteAddr hasn't been resolved yet */ {
 		trace := &httptrace.ClientTrace{
 			ConnectDone: func(network, _addr string, err error) {
 				if err == nil {
-					if addr, err := net.ResolveTCPAddr(network, normalizeAddressOf(urlToCheck)); err == nil {
+					if addr, err := net.ResolveTCPAddr(network, addrToResolve); err == nil {
+						// this may be called multiple times: last invocation wins
 						remoteAddr = addr.String()
+						c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
 					} else {
 						log.Print(err)
 					}
+				}
+			},
+			DNSDone: func(info httptrace.DNSDoneInfo) {
+				if remoteAddr == "" {
+					// this may not be as precise as ConnectDone, thus skipping caching
+					remoteAddr = getDNSAddressesAsString(info.Addrs)
 				}
 			},
 		}
@@ -259,6 +277,15 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 	res.RemoteAddr = remoteAddr
 
 	return res, false
+}
+
+func getDNSAddressesAsString(addrs []net.IPAddr) string {
+	var addr []string
+	for _, a := range addrs {
+		addr = append(addr, a.String())
+	}
+
+	return strings.Join(addr, ", ")
 }
 
 func (c *URLCheckerClient) processResponse(url string, response *resty.Response, err error) *URLCheckResult {
