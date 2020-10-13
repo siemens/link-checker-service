@@ -6,6 +6,15 @@ export VERSION="${TRAVIS_BRANCH}-${TRAVIS_COMMIT}"
 
 echo "VERSION: ${VERSION}"
 
+echo "checking go fmt ./..."
+gofmt=$(go fmt ./...)
+if [[ ${gofmt} ]]; then
+    echo "the following files need go fmt:"
+    echo "${gofmt}"
+    echo "run `go fmt ./...`"
+    exit 1
+fi
+
 echo "fetching dependencies"
 go mod download
 
