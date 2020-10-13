@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.14
+
+- link-checker-service:
+  - best effort remote address resolution
+- sample UI:
+  - show the remote address resolution in the results
+  - added a remote_addr column to CSV export
+
 ## 0.9.13
 
 - link-checker-service:
