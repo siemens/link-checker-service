@@ -82,14 +82,32 @@ function bodyPatternsFound(url) {
 }
 
 function urlToRow(url) {
-    var row = [url.context, url.url, url.status, url.http_status, url.error ? url.error : "", url.timestamp, bodyPatternsFound(url)];
+    var row = [
+        url.context,
+        url.url,
+        url.status,
+        url.http_status,
+        url.error ? url.error : "",
+        url.timestamp,
+        url.remote_addr ? url.remote_addr : "",
+        bodyPatternsFound(url)
+    ];
     return $(row).map(function(_,e){return csvValue(e);}).toArray();
 }
 
 function getCSVResults() {
     var delimiter = ",";
     var delimHeader = ["sep="+delimiter];
-    var header = ["context", "url", "status", "http_status", "error", "timestamp", "body_patterns_found"];
+    var header = [
+        "context",
+        "url",
+        "status",
+        "http_status",
+        "error",
+        "timestamp",
+        "remote_addr",
+        "body_patterns_found"
+    ];
     var urlRows = $(getWindow().results).map(function(_,url) {return [urlToRow(url)];}).toArray();
     var allrows = $([delimHeader, header].concat(urlRows)).map(function(_,row){return $(row).toArray().join(delimiter);}).toArray();
     var csv = allrows.join('\r\n');
@@ -119,7 +137,15 @@ function downloadCSV() {
 function trackResult(index, url) {
     var selector = "#url-check-result-"+url.context;
     $(selector).text(statusOf(url));
-    $(selector).attr('title', url.error);
+
+    var statusHover = url.error;
+    if (url.remote_addr) {
+            if (statusHover) {
+                statusHover += " | ";
+            }
+            statusHover += url.remote_addr;
+        }
+    $(selector).attr('title', statusHover);
     var showSuccesses = showSuccessesChecked();
     var li = $('#url-to-check-'+url.context);
     $(li).attr('data-check-result',url.status);
