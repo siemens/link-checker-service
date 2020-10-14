@@ -2,6 +2,12 @@
 
 Notable changes will be documented here
 
+## 0.9.15
+
+- link-checker-service:
+  - better feedback when reading in config files
+  - fixed DNS resolution for URLs with an explicit port
+
 ## 0.9.14
 
 - link-checker-service:
