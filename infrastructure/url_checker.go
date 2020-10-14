@@ -247,6 +247,7 @@ func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Conte
 		response, err := client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
 			SetContext(ctx).
+			SetHeader("User-Agent", c.settings.BrowserUserAgent).
 			Get(urlToCheck)
 		res = c.processResponse(urlToCheck, response, err)
 		if c.settings.SearchForBodyPatterns && response != nil {
