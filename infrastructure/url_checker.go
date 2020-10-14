@@ -187,9 +187,10 @@ func normalizeAddressOf(input string) string {
 		case "https":
 			port = "443"
 		}
+		return u.Host + ":" + port
 	}
 
-	return u.Host + ":" + port
+	return u.Host
 }
 
 func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, client *resty.Client) (*URLCheckResult, bool) {

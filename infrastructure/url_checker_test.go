@@ -55,6 +55,14 @@ func TestTracingRequests(t *testing.T) {
 	assert.NotEqual(t, res.RemoteAddr, "")
 }
 
+func TestNormalizingAddresses(t *testing.T) {
+	assert.Equal(t, "a:80", normalizeAddressOf("http://a"))
+	assert.Equal(t, "a:80", normalizeAddressOf("http://a:80"))
+	assert.Equal(t, "a:81", normalizeAddressOf("http://a:81"))
+	assert.Equal(t, "a:443", normalizeAddressOf("https://a:443"))
+	assert.Equal(t, "a:443", normalizeAddressOf("https://a"))
+}
+
 func setUpViperTestConfiguration() {
 	viper.SetEnvPrefix("LCS")
 	viper.Set("proxy", os.Getenv("LCS_PROXY"))
