@@ -9,6 +9,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,7 +27,9 @@ import (
 	"github.com/siemens/link-checker-service/infrastructure"
 )
 
-const totalRequestDeadlineTimeoutSeconds = 15
+// to do: parameterized
+const totalRequestDeadlineTimeoutSecondsPerURL = 15
+const totalRequestDeadlineTimeoutSeconds = 300
 const largeRequestLoggingThreshold = 200
 
 // Options configures the web service instance
@@ -248,7 +251,7 @@ func (s *Server) setUpAsyncURLCheck(ctx context.Context, request CheckURLsReques
 		log.Printf("Duplicate URLs found: %v", duplicateCount)
 	}
 
-	deadline := time.NewTimer(time.Second * time.Duration(totalRequestDeadlineTimeoutSeconds*count))
+	deadline := time.NewTimer(time.Second * time.Duration(int64(math.Max(float64(totalRequestDeadlineTimeoutSecondsPerURL*count), float64(totalRequestDeadlineTimeoutSeconds)))))
 	wg := sync.WaitGroup{}
 	resultChannel := make(chan URLStatusResponse, 0)
 	doneChannel := make(chan struct{})
