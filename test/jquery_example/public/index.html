@@ -47,7 +47,7 @@ function updateUrlList(text) {
     return urls;
 }
 
-function getWindow() {
+function getWindowURL() {
     return window.webkitURL || window.URL;
 }
 
@@ -64,7 +64,7 @@ function enableButtons() {
 }
 
 function clearResults() {
-    getWindow().results = [];
+    window.results = [];
 }
 
 function csvValue(value) {
@@ -108,7 +108,7 @@ function getCSVResults() {
         "remote_addr",
         "body_patterns_found"
     ];
-    var urlRows = $(getWindow().results).map(function(_,url) {return [urlToRow(url)];}).toArray();
+    var urlRows = $(window.results).map(function(_,url) {return [urlToRow(url)];}).toArray();
     var allrows = $([delimHeader, header].concat(urlRows)).map(function(_,row){return $(row).toArray().join(delimiter);}).toArray();
     var csv = allrows.join('\r\n');
     return csv;
@@ -122,7 +122,7 @@ function downloadCSV() {
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveOrOpenBlob(blob, filename);
     } else {
-        var url = window.URL.createObjectURL(blob);
+        var url = getWindowURL().createObjectURL(blob);
         var a = document.createElement("a");
         document.body.appendChild(a);
         a.setAttribute("style", "display: none");
@@ -318,7 +318,7 @@ $(document).ready(function(){
                 $(result.urls).each(trackResult);
                 filterResults();
                 enableButtons();
-                getWindow().results = result.urls;
+                window.results = result.urls;
                 updateServiceVersion();
             },
             "json"
@@ -374,7 +374,7 @@ $(document).ready(function(){
                                     var url = JSON.parse(urlSubstring.trim());
                                     console.log(url);
                                     trackResult(0, url);
-                                    getWindow().results.push(url);
+                                    window.results.push(url);
                                     urlCount++;
                                     updateProgress('Check status: '+urlCount+'/'+totalUrls);
                                 }
