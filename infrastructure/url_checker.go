@@ -280,6 +280,7 @@ func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, add
 			remoteAddr = addr.String()
 			c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
 		} else {
+			c.dnsCache.Set(addrToResolve, "DNS resolution failed", defaultRetryFailedAfter)
 			log.Printf("ERROR in resolveAndCacheTCPAddr: %v", err)
 		}
 	}
