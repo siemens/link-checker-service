@@ -395,6 +395,7 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 		client.SetProxy(settings.ProxyURL)
 	}
 	if settings.SkipCertificateCheck {
+		// this is known to be insecure, thus protected via a configuration with a secure default
 		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	}
 	return client
