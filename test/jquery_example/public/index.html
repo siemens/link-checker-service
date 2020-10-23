@@ -54,13 +54,22 @@ function getWindowURL() {
 function disableButtons() {
     $('#check-button').prop('disabled', true);
     $('#check-async-button').prop('disabled', true);
+    $('#abort-check-button').prop('disabled', null);
     $('#download-csv-button').prop('disabled', true);
 }
 
 function enableButtons() {
     $('#check-button').prop('disabled', null);
     $('#check-async-button').prop('disabled', null);
+    $('#abort-check-button').prop('disabled', true);
     $('#download-csv-button').prop('disabled', null);
+}
+
+function abortLastRequest() {
+    if (window.lastCheckRequest) {
+        window.lastCheckRequest.abort();
+    }
+    enableButtons();
 }
 
 function clearResults() {
@@ -296,6 +305,8 @@ $(document).ready(function(){
         urls = updateUrlList(text);
     })
 
+    $('#abort-check-button').click(abortLastRequest);
+
     $('#check-button').click(function(){
         disableButtons();
         clearResults();
@@ -309,7 +320,7 @@ $(document).ready(function(){
         }).toArray();
         var requestBody = JSON.stringify({urls: requestData});
         updateProgress('Check status: requested...');
-        $.post(
+        var xhr = $.post(
             getLinkCheckerBaseURL()+"/checkUrls",
             requestBody,
             function(result){
@@ -327,6 +338,8 @@ $(document).ready(function(){
             updateServiceVersion();
             enableButtons();
         });
+
+        window.lastCheckRequest = xhr;
     });
 
     $('#check-async-button').click(function(){
@@ -347,7 +360,7 @@ $(document).ready(function(){
 
         var messageStart = 0;
         var chunkAttempts = 0;
-        $.ajax({
+        var xhr = $.ajax({
             type: 'POST',
             url: getLinkCheckerBaseURL()+'/checkUrls/stream',
             data: requestBody,
@@ -403,6 +416,9 @@ $(document).ready(function(){
             }
             updateServiceVersion();
         });
+
+        window.lastCheckRequest = xhr;
+
         console.log('Checking asynchronously...');
     });
 
@@ -422,6 +438,7 @@ $(document).ready(function(){
             <div class="d-flex flex-row mt-2 mb-2">
                 <button type="button" class="p-2 btn btn-primary mr-4" id="check-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check</button>
                 <button type="button" class="p-2 btn btn-primary mr-4" id="check-async-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check (async)</button>
+                <button type="button" class="p-2 btn btn-secondary mr-4" id="abort-check-button" data-toggle="tooltip" data-placement="right" title="Abort the check" disabled="true">Abort</button>
                 <button type="button" class="p-2 btn btn-primary mr-4" id="download-csv-button" data-toggle="tooltip" data-placement="right" title="Download the results as CSV" disabled>Download CSV</button>
                     <div class="p-2 form-check mr-4">
                         <input type="checkbox" class="form-check-input" id="showSuccesses">
