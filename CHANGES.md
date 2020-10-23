@@ -1,6 +1,15 @@
 # Release notes
 
-Notable changes will be documented here
+Notable changes will be documented here§
+
+
+## 0.9.16
+
+- link-checker-service:
+  - use the browser user agent in the last resort get request
+  - cache failed DNS resolution to not block the other requests
+  - total request timeout increased
+
 
 ## 0.9.15
 
