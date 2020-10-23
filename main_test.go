@@ -386,6 +386,29 @@ func unmarshalCheckURLsResponse(t *testing.T, w *httptest.ResponseRecorder) serv
 	return response
 }
 
+func TestEmptyRequestsShouldFail(t *testing.T) {
+	testServer := server.NewServer()
+	router := testServer.Detail()
+
+	// async
+	w := newCloseNotifyRecorder()
+	req := httptest.NewRequest("POST", streamingEndpoint, strings.NewReader(`{"urls": []}`))
+	router.ServeHTTP(w, req)
+	body := w.Body.String()
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, strings.ToLower(body), "no")
+
+	// sync
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req)
+
+	body = w.Body.String()
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, strings.ToLower(body), "no")
+}
+
 func TestStreamingResponse(t *testing.T) {
 	testServer := server.NewServer()
 	router := testServer.Detail()
@@ -397,7 +420,7 @@ func TestStreamingResponse(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	if http.StatusOK != w.Code {
-		// "didn't continue, as it' can't work"
+		// "didn't continue -> abort
 		t.Fail()
 		return
 	}

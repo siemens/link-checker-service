@@ -229,6 +229,11 @@ func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context) (CheckURLsRequest, 
 		c.String(http.StatusRequestEntityTooLarge, "Number of URLs in request limit exceeded")
 		return CheckURLsRequest{}, true
 	}
+
+	if uint(count) == 0 {
+		c.String(http.StatusBadRequest, "No URLs in request body")
+		return CheckURLsRequest{}, true
+	}
 	return request, false
 }
 
