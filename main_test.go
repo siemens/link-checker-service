@@ -407,6 +407,16 @@ func TestEmptyRequestsShouldFail(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, strings.ToLower(body), "no")
+
+	// empty urls
+	req = httptest.NewRequest("POST", streamingEndpoint, strings.NewReader(`{}`))
+	w2 = httptest.NewRecorder()
+	router.ServeHTTP(w2, req)
+
+	body = w.Body.String()
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, strings.ToLower(body), "no")
 }
 
 func TestStreamingResponse(t *testing.T) {
