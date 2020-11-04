@@ -78,20 +78,41 @@ type URLCheckerClient struct {
 	clientWithoutProxy *resty.Client
 	settings           urlCheckerSettings
 	dnsCache           *cache.Cache
+	checkerPlugins     []URLCheckerPlugin
 }
 
 // NewURLCheckerClient instantiates a new basic URL checking client
 func NewURLCheckerClient() *URLCheckerClient {
 	urlCheckerSettings := getURLCheckerSettings()
-	urlCheckerSettingsNoProxy := urlCheckerSettings
-	urlCheckerSettingsNoProxy.ProxyURL = ""
 
-	return &URLCheckerClient{
-		client:             buildClient(urlCheckerSettings),
-		clientWithoutProxy: buildClient(urlCheckerSettingsNoProxy),
-		settings:           urlCheckerSettings,
-		dnsCache:           cache.New(defaultCacheExpirationInterval, defaultCacheCleanupInterval),
+	c := &URLCheckerClient{
+		settings: urlCheckerSettings,
+		dnsCache: cache.New(defaultCacheExpirationInterval, defaultCacheCleanupInterval),
 	}
+
+	// checkers in sequence: [(with proxy), without proxy]
+	var checkers []URLCheckerPlugin
+
+	// default client
+	checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettings)))
+
+	// if proxy is defined, add one without the proxy as fallback
+	if urlCheckerSettings.ProxyURL != "" {
+		urlCheckerSettingsNoProxy := urlCheckerSettings
+		urlCheckerSettingsNoProxy.ProxyURL = ""
+		checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettingsNoProxy)))
+	}
+
+	c.checkerPlugins = checkers
+
+	return c
+}
+
+func addChecker(checkers []URLCheckerPlugin, plugin URLCheckerPlugin) []URLCheckerPlugin {
+	if plugin != nil {
+		return append(checkers, plugin)
+	}
+	return checkers
 }
 
 func getURLCheckerSettings() urlCheckerSettings {
@@ -158,19 +179,44 @@ func getURLCheckerSettings() urlCheckerSettings {
 	return s
 }
 
+func newLocalURLChecker(c *URLCheckerClient, client *resty.Client) *localURLChecker {
+	return &localURLChecker{
+		c:      c,
+		client: client,
+	}
+}
+
+type localURLChecker struct {
+	c      *URLCheckerClient
+	client *resty.Client
+}
+
+func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastResult *URLCheckResult) (*URLCheckResult, bool) {
+	if lastResult == nil || (lastResult.Code == http.StatusBadGateway) {
+		return l.c.checkURL(ctx, urlToCheck, l.client)
+	}
+	return lastResult, false
+}
+
 // CheckURL checks a single URL
 func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckResult {
-	res, shouldAbort := c.checkURL(ctx, url, c.client)
-	if shouldAbort {
-		return res
+	var lastRes *URLCheckResult = nil
+
+	for pos, currentChecker := range c.checkerPlugins {
+		res, shouldAbort := currentChecker.CheckURL(ctx, url, lastRes)
+
+		if pos == 0 && res == nil {
+			panic("first checker should never return nil")
+		}
+
+		if shouldAbort {
+			return res
+		}
+
+		lastRes = res
 	}
 
-	if res.Code == http.StatusBadGateway && c.settings.ProxyURL != "" {
-		res, _ = c.checkURL(ctx, url, c.clientWithoutProxy)
-		return res
-	}
-
-	return res
+	return lastRes
 }
 
 func normalizeAddressOf(input string) string {
@@ -296,9 +342,9 @@ func (c *URLCheckerClient) cachedRemoteAddr(addrToResolve string) string {
 	return remoteAddr
 }
 
-func getDNSAddressesAsString(addrs []net.IPAddr) string {
+func getDNSAddressesAsString(addresses []net.IPAddr) string {
 	var addr []string
-	for _, a := range addrs {
+	for _, a := range addresses {
 		addr = append(addr, a.String())
 	}
 
