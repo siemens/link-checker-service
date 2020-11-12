@@ -39,6 +39,12 @@ disableRequestLogging = false
 #    "some-dom?in.*"
 # ]
 
+# Middleware used: https://github.com/appleboy/gin-jwt
+useJWTValidation = false
+privKeyFile = "./dummy.priv.cer"
+pubKeyFile = "./public.cer"
+signingAlgorithm = "RS384"
+
 # searchForBodyPatterns allows searching for patterns in response bodies
 # enabling searchForBodyPatterns will impact checker performance
 # this feature is only configurable via the config file

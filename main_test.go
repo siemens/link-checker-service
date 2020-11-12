@@ -7,6 +7,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/siemens/link-checker-service/infrastructure"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -440,4 +441,43 @@ func TestStreamingResponse(t *testing.T) {
 	// both contexts:
 	assert.Contains(t, body, "\"1\"")
 	assert.Contains(t, body, "\"2\"")
+}
+
+func TestJWTAuthentication(t *testing.T) {
+	pubKey, privKey, priv := createTestCertificates()
+	testServer := server.NewServerWithOptions(&server.Options{
+		JWTValidationOptions: &server.JWTValidationOptions{
+			PrivKeyFile:      privKey,
+			PubKeyFile:       pubKey,
+			SigningAlgorithm: "RS384",
+		},
+	})
+	router := testServer.Detail()
+
+	// missing authentication
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/version", nil)
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "the call without a bearer token should fail")
+
+	// correct token
+	w = httptest.NewRecorder()
+	token, _ := createJWTToken(priv)
+	req, _ = http.NewRequest("GET", "/version", nil)
+	req.Header.Add("Authorization", "Bearer "+token)
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code, "JWT token should have been valid")
+	body := w.Body.String()
+	assert.Contains(t, body, infrastructure.BinaryVersion())
+
+	// bad token
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/version", nil)
+	req.Header.Add("Authorization", "Bearer !bad!"+token)
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "A bad JWT token should not have been valid")
+
+	// cleanup
+	os.Remove(privKey)
+	os.Remove(pubKey)
 }

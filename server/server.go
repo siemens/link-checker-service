@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gobwas/glob"
 	"github.com/ulule/limiter/v3"
 	gm "github.com/ulule/limiter/v3/drivers/middleware/gin"
@@ -32,6 +33,12 @@ const totalRequestDeadlineTimeoutSecondsPerURL = 15
 const totalRequestDeadlineTimeoutSeconds = 300
 const largeRequestLoggingThreshold = 200
 
+type JWTValidationOptions struct {
+	PrivKeyFile      string
+	PubKeyFile       string
+	SigningAlgorithm string
+}
+
 // Options configures the web service instance
 type Options struct {
 	CORSOrigins           []string
@@ -40,6 +47,7 @@ type Options struct {
 	DisableRequestLogging bool
 	DomainBlacklistGlobs  []string
 	BindAddress           string
+	JWTValidationOptions  *JWTValidationOptions
 }
 
 // Server starts an instance of the link checker service
@@ -118,6 +126,10 @@ func (s *Server) Run() {
 func (s *Server) setupRoutes() {
 	s.setUpCORS()
 	s.setUpRateLimiting()
+
+	if s.options.JWTValidationOptions != nil {
+		s.setUpJWTValidation()
+	}
 
 	if s.options.MaxURLsInRequest > 0 {
 		log.Printf("Max URLs per request: %v", s.options.MaxURLsInRequest)
@@ -325,6 +337,30 @@ func (s *Server) isBlacklisted(input URLRequest) bool {
 		}
 	}
 	return false
+}
+
+func (s *Server) setUpJWTValidation() {
+	if s.options.JWTValidationOptions == nil {
+		log.Fatal("JWT Validation not set up correctly")
+	}
+
+	// the jwt middleware
+	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
+		PrivKeyFile:      s.options.JWTValidationOptions.PrivKeyFile,      //"./dummy.private.cer",
+		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,       //"./2020-02-13.myid-qa.siemens.com-Signing_Certificate.cer",
+		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm, // "RS384",
+	})
+
+	if err != nil {
+		log.Fatal("JWT Error:" + err.Error())
+	}
+
+	s.server.Use(middleware.MiddlewareFunc())
+
+	log.Println("Using JWT Validation")
+	log.Printf("  PrivKeyFile: %v", s.options.JWTValidationOptions.PrivKeyFile)
+	log.Printf("  PubKeyFile: %v", s.options.JWTValidationOptions.PubKeyFile)
+	log.Printf("  SigningAlgorithm: %v", s.options.JWTValidationOptions.SigningAlgorithm)
 }
 
 func (s *Server) setUpRateLimiting() {

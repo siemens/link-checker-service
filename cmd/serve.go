@@ -12,14 +12,20 @@ import (
 )
 
 var corsOrigins []string = nil
+var useJWTValidation = false
 
 // IPRateLimit e.g. for 100 requests/minute: "100-M"
 var IPRateLimit = ""
 var maxURLsInRequest uint = 0
 var disableRequestLogging = false
 var domainBlacklistGlobs []string
+var jwtValidationOptions *s.JWTValidationOptions = nil
 
 const bindAddressKey = "bindAddress"
+const useJWTValidationKey = "useJWTValidation"
+const PrivKeyFileKey = "privKeyFile"
+const PubKeyFileKey = "pubKeyFile"
+const SigningAlgorithmKey = "signingAlgorithm"
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -34,6 +40,7 @@ var serveCmd = &cobra.Command{
 			DisableRequestLogging: disableRequestLogging,
 			DomainBlacklistGlobs:  domainBlacklistGlobs,
 			BindAddress:           viper.GetString(bindAddressKey),
+			JWTValidationOptions:  jwtValidationOptions,
 		})
 		server.Run()
 	},
@@ -49,6 +56,10 @@ func fetchConfig() {
 		IPRateLimit = viper.GetString("IPRateLimit")
 	}
 
+	if useJWTValidation {
+		fetchJWTValidationConfig()
+	}
+
 	maxURLsInRequest = viper.GetUint(maxURLsInRequestKey)
 
 	if viper.Get(domainBlacklistGlobsKey) != nil {
@@ -60,6 +71,14 @@ func fetchConfig() {
 	}
 }
 
+func fetchJWTValidationConfig() {
+	jwtValidationOptions = &s.JWTValidationOptions{
+		PrivKeyFile:      viper.GetString(PrivKeyFileKey),
+		PubKeyFile:       viper.GetString(PubKeyFileKey),
+		SigningAlgorithm: viper.GetString(SigningAlgorithmKey),
+	}
+}
+
 func init() {
 	flags := serveCmd.Flags()
 	flags.StringSliceVarP(&corsOrigins, "corsOrigins", "o", nil,
@@ -68,6 +87,21 @@ func init() {
 	flags.StringP(bindAddressKey, "a", "",
 		"bind to a different address other than `:8080`, i.e. 0.0.0.0:4444 or 127.0.0.1:4444")
 	_ = viper.BindPFlag(bindAddressKey, flags.Lookup(bindAddressKey))
+
+	flags.BoolVar(&useJWTValidation, useJWTValidationKey, false,
+		"use JWT validation")
+
+	flags.String(PrivKeyFileKey, "dummy.priv.cer",
+		"Provide a valid dummy private key certificate (work-around)")
+	_ = viper.BindPFlag(PrivKeyFileKey, flags.Lookup(PrivKeyFileKey))
+
+	flags.String(PubKeyFileKey, "public.cer",
+		"Provide a valid public key to validate the JWT tokens against")
+	_ = viper.BindPFlag(PubKeyFileKey, flags.Lookup(PubKeyFileKey))
+
+	flags.String(SigningAlgorithmKey, "RS384",
+		"Provide a valid public key to validate the JWT tokens against")
+	_ = viper.BindPFlag(SigningAlgorithmKey, flags.Lookup(SigningAlgorithmKey))
 
 	flags.StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
 

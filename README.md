@@ -169,6 +169,15 @@ For complex keys, such as `HTTPClient.userAgent`, take the uppercase key and rep
 LCS_HTTPCLIENT_USERAGENT="lcs/2.0"
 ```
 
+### Authentication
+
+The server implements a simple optional authentication via JWT token validation using a public certificate (middleware: [github.com/appleboy/gin-jwt](https://github.com/appleboy/gin-jwt)).
+
+[Currently](https://github.com/appleboy/gin-jwt/issues/236), the JWT middleware requires a dummy private
+certificate to be configured, even though it is not used for validation.
+
+See the [configuration file](.link-checker-service.toml) and the `serve` command help for detailed settings.
+
 ### Advanced Configuration
 
 Link checker can optionally detect patterns within successful HTTP response bodies, e.g. in pages with authentication.
