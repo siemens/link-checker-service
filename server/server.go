@@ -347,9 +347,9 @@ func (s *Server) setUpJWTValidation() {
 
 	// the jwt middleware
 	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		PrivKeyFile:      s.options.JWTValidationOptions.PrivKeyFile,      //"./dummy.private.cer",
-		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,       //"./2020-02-13.myid-qa.siemens.com-Signing_Certificate.cer",
-		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm, // "RS384",
+		PrivKeyFile:      s.options.JWTValidationOptions.PrivKeyFile,
+		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,
+		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm,
 	})
 
 	if err != nil {
