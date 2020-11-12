@@ -23,9 +23,9 @@ var jwtValidationOptions *s.JWTValidationOptions = nil
 
 const bindAddressKey = "bindAddress"
 const useJWTValidationKey = "useJWTValidation"
-const PrivKeyFileKey = "privKeyFile"
-const PubKeyFileKey = "pubKeyFile"
-const SigningAlgorithmKey = "signingAlgorithm"
+const privKeyFileKey = "privKeyFile"
+const pubKeyFileKey = "pubKeyFile"
+const signingAlgorithmKey = "signingAlgorithm"
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -73,9 +73,9 @@ func fetchConfig() {
 
 func fetchJWTValidationConfig() {
 	jwtValidationOptions = &s.JWTValidationOptions{
-		PrivKeyFile:      viper.GetString(PrivKeyFileKey),
-		PubKeyFile:       viper.GetString(PubKeyFileKey),
-		SigningAlgorithm: viper.GetString(SigningAlgorithmKey),
+		PrivKeyFile:      viper.GetString(privKeyFileKey),
+		PubKeyFile:       viper.GetString(pubKeyFileKey),
+		SigningAlgorithm: viper.GetString(signingAlgorithmKey),
 	}
 }
 
@@ -91,17 +91,17 @@ func init() {
 	flags.BoolVar(&useJWTValidation, useJWTValidationKey, false,
 		"use JWT validation")
 
-	flags.String(PrivKeyFileKey, "dummy.priv.cer",
+	flags.String(privKeyFileKey, "dummy.priv.cer",
 		"Provide a valid dummy private key certificate (work-around)")
-	_ = viper.BindPFlag(PrivKeyFileKey, flags.Lookup(PrivKeyFileKey))
+	_ = viper.BindPFlag(privKeyFileKey, flags.Lookup(privKeyFileKey))
 
-	flags.String(PubKeyFileKey, "public.cer",
+	flags.String(pubKeyFileKey, "public.cer",
 		"Provide a valid public key to validate the JWT tokens against")
-	_ = viper.BindPFlag(PubKeyFileKey, flags.Lookup(PubKeyFileKey))
+	_ = viper.BindPFlag(pubKeyFileKey, flags.Lookup(pubKeyFileKey))
 
-	flags.String(SigningAlgorithmKey, "RS384",
+	flags.String(signingAlgorithmKey, "RS384",
 		"Provide a valid public key to validate the JWT tokens against")
-	_ = viper.BindPFlag(SigningAlgorithmKey, flags.Lookup(SigningAlgorithmKey))
+	_ = viper.BindPFlag(signingAlgorithmKey, flags.Lookup(signingAlgorithmKey))
 
 	flags.StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
 

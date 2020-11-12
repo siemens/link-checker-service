@@ -478,6 +478,6 @@ func TestJWTAuthentication(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "A bad JWT token should not have been valid")
 
 	// cleanup
-	os.Remove(privKey)
-	os.Remove(pubKey)
+	_ = os.Remove(privKey)
+	_ = os.Remove(pubKey)
 }

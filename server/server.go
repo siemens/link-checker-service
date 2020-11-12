@@ -33,6 +33,7 @@ const totalRequestDeadlineTimeoutSecondsPerURL = 15
 const totalRequestDeadlineTimeoutSeconds = 300
 const largeRequestLoggingThreshold = 200
 
+// JWTValidationOptions configures authentication via JWT validation
 type JWTValidationOptions struct {
 	PrivKeyFile      string
 	PubKeyFile       string
