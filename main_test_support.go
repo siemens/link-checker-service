@@ -5,7 +5,19 @@
 // SPDX-License-Identifier: MPL-2.0
 package main
 
-import "net/http/httptest"
+import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"github.com/dgrijalva/jwt-go"
+	"log"
+	"math/big"
+	"net/http/httptest"
+	"os"
+	"time"
+)
 
 // adapted the testing technique from
 // https://github.com/gin-gonic/gin/blob/ce20f107f5dc498ec7489d7739541a25dcd48463/context_test.go#L1747-L1765 (MIT license)
@@ -30,4 +42,67 @@ func newCloseNotifyRecorder() *closeNotifyRecorder {
 		httptest.NewRecorder(),
 		make(chan bool, 1),
 	}
+}
+
+// based on https://golang.org/src/crypto/tls/generate_cert.go
+func createTestCertificates() (string, string, interface{}) {
+	const key = "key.pem"
+	const cert = "cert.pem"
+	var err error
+	var priv interface{}
+	priv, err = rsa.GenerateKey(rand.Reader, 2048)
+
+	serial := new(big.Int)
+	serial.SetInt64(1)
+	template := x509.Certificate{
+		SerialNumber:          serial,
+		Subject:               pkix.Name{Organization: []string{"None"}},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(2 * time.Minute),
+		KeyUsage:              x509.KeyUsageCRLSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		BasicConstraintsValid: true,
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, priv.(*rsa.PrivateKey).Public(), priv)
+	if err != nil {
+		log.Fatalf("Failed to create certificate: %v", err)
+	}
+
+	certOut, err := os.Create(cert)
+	if err != nil {
+		log.Fatalf("Failed to open %v for writing: %v", cert, err)
+	}
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		log.Fatalf("Failed to write data to %v: %v", cert, err)
+	}
+	if err := certOut.Close(); err != nil {
+		log.Fatalf("Error closing %v: %v", cert, err)
+	}
+	log.Printf("wrote %v", cert)
+
+	keyOut, err := os.OpenFile(key, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Fatalf("Failed to open %v for writing: %v", key, err)
+	}
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		log.Fatalf("Unable to marshal private key: %v", err)
+	}
+	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
+		log.Fatalf("Failed to write data to %v: %v", key, err)
+	}
+	if err := keyOut.Close(); err != nil {
+		log.Fatalf("Error closing %v: %v", key, err)
+	}
+	log.Printf("wrote %v", key)
+	return cert, key, priv
+}
+
+func createJWTToken(privKey interface{}) (string, error) {
+	token := jwt.New(jwt.SigningMethodRS384)
+	token.Claims = &jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(3 * time.Minute).UTC().Unix(),
+	}
+	return token.SignedString(privKey)
 }
