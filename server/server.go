@@ -254,8 +254,8 @@ func (s *Server) setUpCORS() {
 	if s.options.CORSOrigins != nil && len(s.options.CORSOrigins) > 0 {
 		corsConfig := cors.DefaultConfig()
 		corsConfig.AllowOrigins = s.options.CORSOrigins
-		corsConfig.AllowMethods = []string{"POST", "GET"}
-		corsConfig.AllowHeaders = []string{"last-event-id"}
+		corsConfig.AllowMethods = []string{"POST", "GET", "OPTIONS"}
+		corsConfig.AllowHeaders = []string{"last-event-id", "Authorization"}
 		corsConfig.AllowCredentials = true
 		log.Printf("Using CORS headers: %v", corsConfig.AllowOrigins)
 		s.server.Use(cors.New(corsConfig))
