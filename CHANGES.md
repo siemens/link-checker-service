@@ -2,6 +2,11 @@
 
 Notable changes will be documented here§
 
+## 0.9.18
+
+- link-checker-service:
+  - Simple authentication via JWT validation
+
 ## 0.9.17
 
 - link-checker-service:
