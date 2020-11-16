@@ -1,6 +1,6 @@
 ## Example UI
 
-- disclaimer: this UI is included for demo purposes only, and does not conscern itself with any security considerations
+- disclaimer: this UI is included for demo purposes only, and does not concern itself with any security aspects
 - run the link checker service with appropriate CORS headers, e.g. `link-checker-service serve  --corsOrigins="http://localhost:8092"`
 - serve this directory from the port `8092`, e.g. `python -m http.server 8092`
 - open http://localhost:8092
