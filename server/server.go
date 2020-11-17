@@ -346,6 +346,11 @@ func (s *Server) setUpJWTValidation() {
 		log.Fatal("JWT Validation not set up correctly")
 	}
 
+	log.Println("Using JWT Validation")
+	log.Printf("  PrivKeyFile: %v", s.options.JWTValidationOptions.PrivKeyFile)
+	log.Printf("  PubKeyFile: %v", s.options.JWTValidationOptions.PubKeyFile)
+	log.Printf("  SigningAlgorithm: %v", s.options.JWTValidationOptions.SigningAlgorithm)
+
 	// the jwt middleware
 	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		PrivKeyFile:      s.options.JWTValidationOptions.PrivKeyFile,
@@ -358,11 +363,6 @@ func (s *Server) setUpJWTValidation() {
 	}
 
 	s.server.Use(middleware.MiddlewareFunc())
-
-	log.Println("Using JWT Validation")
-	log.Printf("  PrivKeyFile: %v", s.options.JWTValidationOptions.PrivKeyFile)
-	log.Printf("  PubKeyFile: %v", s.options.JWTValidationOptions.PubKeyFile)
-	log.Printf("  SigningAlgorithm: %v", s.options.JWTValidationOptions.SigningAlgorithm)
 }
 
 func (s *Server) setUpRateLimiting() {
