@@ -12,7 +12,6 @@ import (
 )
 
 var corsOrigins []string = nil
-var useJWTValidation = false
 
 // IPRateLimit e.g. for 100 requests/minute: "100-M"
 var IPRateLimit = ""
@@ -56,7 +55,7 @@ func fetchConfig() {
 		IPRateLimit = viper.GetString("IPRateLimit")
 	}
 
-	if useJWTValidation {
+	if viper.GetBool(useJWTValidationKey) {
 		fetchJWTValidationConfig()
 	}
 
@@ -88,8 +87,9 @@ func init() {
 		"bind to a different address other than `:8080`, i.e. 0.0.0.0:4444 or 127.0.0.1:4444")
 	_ = viper.BindPFlag(bindAddressKey, flags.Lookup(bindAddressKey))
 
-	flags.BoolVar(&useJWTValidation, useJWTValidationKey, false,
+	flags.Bool(useJWTValidationKey, false,
 		"use JWT validation")
+	_ = viper.BindPFlag(useJWTValidationKey, flags.Lookup(useJWTValidationKey))
 
 	flags.String(privKeyFileKey, "dummy.priv.cer",
 		"Provide a valid dummy private key certificate (work-around)")
