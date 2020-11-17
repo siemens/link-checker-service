@@ -16,7 +16,6 @@ var corsOrigins []string = nil
 // IPRateLimit e.g. for 100 requests/minute: "100-M"
 var IPRateLimit = ""
 var maxURLsInRequest uint = 0
-var disableRequestLogging = false
 var domainBlacklistGlobs []string
 var jwtValidationOptions *s.JWTValidationOptions = nil
 
@@ -25,6 +24,7 @@ const useJWTValidationKey = "useJWTValidation"
 const privKeyFileKey = "privKeyFile"
 const pubKeyFileKey = "pubKeyFile"
 const signingAlgorithmKey = "signingAlgorithm"
+const disableRequestLoggingKey = "disableRequestLogging"
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -36,7 +36,7 @@ var serveCmd = &cobra.Command{
 			CORSOrigins:           corsOrigins,
 			IPRateLimit:           IPRateLimit,
 			MaxURLsInRequest:      maxURLsInRequest,
-			DisableRequestLogging: disableRequestLogging,
+			DisableRequestLogging: viper.GetBool(disableRequestLoggingKey),
 			DomainBlacklistGlobs:  domainBlacklistGlobs,
 			BindAddress:           viper.GetString(bindAddressKey),
 			JWTValidationOptions:  jwtValidationOptions,
@@ -105,7 +105,8 @@ func init() {
 
 	flags.StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
 
-	serveCmd.PersistentFlags().BoolVarP(&disableRequestLogging, "disableRequestLogging", "s", false, "disable request logging")
+	serveCmd.PersistentFlags().BoolP(disableRequestLoggingKey, "s", false, "disable request logging")
+	_ = viper.BindPFlag(disableRequestLoggingKey, serveCmd.PersistentFlags().Lookup(disableRequestLoggingKey))
 
 	rootCmd.AddCommand(serveCmd)
 }
