@@ -12,6 +12,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -111,6 +112,7 @@ func (s *Server) Detail() *gin.Engine {
 // Run starts the service instance (binds a port)
 // set the PORT environment variable for a different port to bind at
 func (s *Server) Run() {
+	log.Printf("GOMAXPROCS: %v", runtime.GOMAXPROCS(-1))
 	var err error
 	if s.options.BindAddress != "" {
 		// custom bind address, e.g. 0.0.0.0:4444
