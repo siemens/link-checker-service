@@ -5,10 +5,12 @@ The Link Checker web service runs cached and otherwise optimized broken link che
 [![Build Status](https://travis-ci.org/siemens/link-checker-service.svg?branch=master)](https://travis-ci.org/siemens/link-checker-service) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service)
 
 Endpoints:
-  - `/checkUrls` checks a batch at once
-  - `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
-  - `/version` returns the server version
 
+- `/checkUrls` checks a batch at once
+- `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
+- `/version` returns the server version
+- `/version` returns the server version
+- `/livez`, `/readyz` health checks
 
 ## Quickstart
 
@@ -25,21 +27,17 @@ go get -u github.com/siemens/link-checker-service
 link-checker-service serve
 ```
 
-
 - download it from the [releases](https://github.com/siemens/link-checker-service/releases/latest)
-
 
 - run the service dockerized, without installing Go:
 
-
-```
+```bash
 docker-compose up --build
 ```
 
-
 - run from this source:
 
-```
+```bash
 go run . serve
 ```
 
@@ -78,13 +76,13 @@ Start the server, e.g. `link-checker-service serve`, and send the following requ
 
 e.g. via [HTTPie](https://httpie.org/docs#explicit-json) on windows cmd
 
-```
+```cmd
 http POST localhost:8080/checkUrls urls:="[{"""url""":"""https://google.com""","""context""":"""0"""},{"""url""":"""https://baskldjha.com/loaksd""","""context""":"""1"""}]"
 ```
 
 or in *sh:
 
-```
+```bash
 http POST localhost:8080/checkUrls urls:='[{"url":"https://google.com","context":"0"},{"url":"https://baskldjha.com/loaksd","context":"1"}]'
 ```
 
@@ -124,7 +122,8 @@ JSON Streaming can be used to optimize the client user experience, so that the c
 does not have to wait for the whole check result to complete to render.
 
 In the sample HTTPie request, post the streaming request to the `/checkUrls/stream` endpoint:
-```
+
+```bash
 http --stream  POST  localhost:8080/checkUrls/stream ...
 ```
 
@@ -135,7 +134,6 @@ These can then be rendered immediately. E.g. see the [sample UI](test/jquery_exa
 
 - For a programmatic large URL list check, see [test/large_list_check](test/large_list_check), which crawls a markdown page for URLs and checks them via the running link checker service
 - For an example of a simple page to check links and display the results using jQuery using the service, see [test/jquery_example](test/jquery_example)
-
 
 ## Configuration
 
@@ -251,25 +249,22 @@ the alternatives that are not URL list check web services:
 
 some URL check services exist, albeit not open source (as of 02.09.2020)
 
-
 ## License
 
+```text
     Copyright 2020 Siemens AG and contributors as noted in the AUTHORS file.
-
 
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
     file, You can obtain one at http://mozilla.org/MPL/2.0/
-
+```
 
 The following sample code folders are licensed under [Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/)
 
 - [test/jquery_example](test/jquery_example)
 - [test/large_list_check](test/large_list_check)
 
-
 The [testing work-around](main_test_support.go) for streaming responses has been adapted from [gin](https://github.com/gin-gonic/gin/blob/ce20f107f5dc498ec7489d7739541a25dcd48463/context_test.go#L1747-L1765) (Copyright Manu Martinez-Almeida, MIT License)
-
 
 ## Disclaimer
 
