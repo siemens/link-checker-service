@@ -33,6 +33,11 @@ requestsPerSecondPerDomain = 10
 
 disableRequestLogging = false
 
+# "urlcheck-noproxy" can be used if a proxy is defined, and an additional check without a proxy makes sense
+urlCheckerPlugins = [
+    "urlcheck",
+]
+
 # see https://github.com/gobwas/glob pattern definitions
 # enable if necessary (will impact check performance)
 # domainBlacklistGlobs = [

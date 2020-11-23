@@ -65,6 +65,7 @@ type urlCheckerSettings struct {
 	SearchForBodyPatterns bool
 	BodyPatterns          []bodyPattern
 	EnableRequestTracing  bool
+	UrlCheckerPlugins     []string
 }
 
 // URLChecker interface that all layers should conform to
@@ -90,17 +91,58 @@ func NewURLCheckerClient() *URLCheckerClient {
 		dnsCache: cache.New(defaultCacheExpirationInterval, defaultCacheCleanupInterval),
 	}
 
-	// checkers in sequence: [(with proxy), without proxy]
 	var checkers []URLCheckerPlugin
 
-	// default client
-	checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettings)))
+	// for now, a valid checker may be configured twice, for whatever reason
+	for _, checkerName := range c.settings.UrlCheckerPlugins {
+		switch checkerName {
+		case "urlcheck":
+			// default client
+			checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettings)))
+			log.Println("Added the defaut URL checker")
+			break
+		case "urlcheck-noproxy":
+			// if proxy is defined, add one without the proxy as fallback
+			if urlCheckerSettings.ProxyURL == "" {
+				panic("No point in adding a 'urlcheck-noproxy' checker, as no proxy URL is defined")
+			}
 
-	// if proxy is defined, add one without the proxy as fallback
-	if urlCheckerSettings.ProxyURL != "" {
-		urlCheckerSettingsNoProxy := urlCheckerSettings
-		urlCheckerSettingsNoProxy.ProxyURL = ""
-		checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettingsNoProxy)))
+			urlCheckerSettingsNoProxy := urlCheckerSettings
+			urlCheckerSettingsNoProxy.ProxyURL = ""
+			checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettingsNoProxy)))
+			log.Println("Added the URL checker that doesn't use a proxy")
+			break
+		case "_always_ok":
+			// fake client for testing
+			checkers = addChecker(checkers, &fakeURLChecker{&URLCheckResult{
+				Status:                Ok,
+				Code:                  http.StatusOK,
+				Error:                 nil,
+				FetchedAtEpochSeconds: 0,
+				BodyPatternsFound:     nil,
+				RemoteAddr:            "",
+			}})
+			log.Println("Added the _always_ok checker")
+			break
+		case "_always_bad":
+			// fake client for testing
+			checkers = addChecker(checkers, &fakeURLChecker{&URLCheckResult{
+				Status:                Broken,
+				Code:                  http.StatusInternalServerError,
+				Error:                 fmt.Errorf("bad"),
+				FetchedAtEpochSeconds: 0,
+				BodyPatternsFound:     nil,
+				RemoteAddr:            "",
+			}})
+			log.Println("Added the _always_bad checker")
+			break
+		default:
+			panic(fmt.Errorf("Unknown checker: %v", checkerName))
+		}
+	}
+
+	if len(checkers) == 0 {
+		panic("Found no checker plugins. Please define one using '-p'")
 	}
 
 	c.checkerPlugins = checkers
@@ -176,7 +218,24 @@ func getURLCheckerSettings() urlCheckerSettings {
 		}
 	}
 
+	urlCheckerPlugins := []string{"urlcheck"}
+	const urlCheckerPluginsKey = "urlCheckerPlugins"
+	g := viper.GetStringSlice(urlCheckerPluginsKey)
+	// empty string slice config creates a single slice with a "[]" -> fix
+	if g != nil && !(len(g) == 1 && g[0] == "[]") && len(g) > 0 {
+		urlCheckerPlugins = viper.GetStringSlice(urlCheckerPluginsKey)
+	}
+	s.UrlCheckerPlugins = urlCheckerPlugins
+
 	return s
+}
+
+type fakeURLChecker struct {
+	alwaysReturn *URLCheckResult
+}
+
+func (l *fakeURLChecker) CheckURL(context.Context, string, *URLCheckResult) (*URLCheckResult, bool) {
+	return l.alwaysReturn, true /* aborts the chain for now */
 }
 
 func newLocalURLChecker(c *URLCheckerClient, client *resty.Client) *localURLChecker {

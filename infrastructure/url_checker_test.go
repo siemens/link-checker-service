@@ -46,13 +46,13 @@ func TestTracingRequests(t *testing.T) {
 	res := NewURLCheckerClient().CheckURL(context.Background(), "https://google.com")
 	assert.Nil(t, res.Error)
 	assert.Equal(t, http.StatusOK, res.Code)
-	assert.Equal(t, res.RemoteAddr, "")
+	assert.Equal(t, "", res.RemoteAddr)
 
 	viper.Set("HTTPClient.enableRequestTracing", true)
 	res = NewURLCheckerClient().CheckURL(context.Background(), "https://google.com")
 	assert.Nil(t, res.Error)
 	assert.Equal(t, http.StatusOK, res.Code)
-	assert.NotEqual(t, res.RemoteAddr, "")
+	assert.NotEqual(t, "", res.RemoteAddr)
 }
 
 func TestNormalizingAddresses(t *testing.T) {
@@ -70,6 +70,7 @@ func setUpViperTestConfiguration() {
 	viper.Set("HTTPClient.maxRedirectsCount", uint(15))
 	viper.Set("HTTPClient.enableRequestTracing", false)
 	viper.Set("searchForBodyPatterns", false)
+	viper.Set("urlCheckerPlugins", []string{})
 	patterns := []struct {
 		Name  string
 		Regex string
@@ -77,4 +78,42 @@ func setUpViperTestConfiguration() {
 		{"google", "google"},
 	}
 	viper.Set("bodyPatterns", patterns)
+}
+
+func TestDefaultURLCheckerClientPlugins(t *testing.T) {
+	// the default is a single URL client-based checker
+	setUpViperTestConfiguration()
+	c := NewURLCheckerClient()
+	assert.Equal(t, []string{"urlcheck"}, c.settings.UrlCheckerPlugins)
+
+	// setting multiple checkers is possible
+	viper.Set("urlCheckerPlugins", []string{"urlcheck", "_always_ok", "urlcheck"})
+	c = NewURLCheckerClient()
+	assert.Equal(t, []string{"urlcheck", "_always_ok", "urlcheck"}, c.settings.UrlCheckerPlugins)
+
+	// unsetting the proxy disables the ability to add the noproxy client
+	assert.Panics(t, func() {
+		viper.Set("proxy", nil)
+		viper.Set("urlCheckerPlugins", []string{"urlcheck", "urlcheck-noproxy"})
+		NewURLCheckerClient()
+	})
+
+	// setting the proxy enables adding the noproxy client
+	assert.NotPanics(t, func() {
+		viper.Set("proxy", "http://proxy:1234")
+		viper.Set("urlCheckerPlugins", []string{"urlcheck", "urlcheck-noproxy"})
+		c = NewURLCheckerClient()
+		assert.Equal(t, []string{"urlcheck", "urlcheck-noproxy"}, c.settings.UrlCheckerPlugins)
+	})
+}
+
+func TestCheckerSequenceMatters(t *testing.T) {
+	setUpViperTestConfiguration()
+	viper.Set("urlCheckerPlugins", []string{"_always_ok", "_always_bad"})
+	res := NewURLCheckerClient().CheckURL(context.Background(), "http://lkasdjfasf.com/123987")
+	assert.Equal(t, Ok, res.Status, "the result should've been Ok as _always_ok comes first and aborts the chain")
+
+	viper.Set("urlCheckerPlugins", []string{"_always_bad", "_always_ok"})
+	res = NewURLCheckerClient().CheckURL(context.Background(), "http://lkasdjfasf.com/123987")
+	assert.NotEqual(t, Ok, res.Status, "the result should not have been Ok as _always_bad comes first and aborts the chain")
 }

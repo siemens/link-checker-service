@@ -31,6 +31,7 @@ const (
 	maxURLsInRequestKey           = "maxURLsInRequest"
 	requestsPerSecondPerDomainKey = "requestsPerSecondPerDomain"
 	domainBlacklistGlobsKey       = "domainBlacklistGlobs"
+	urlCheckerPluginsKey          = "urlCheckerPlugins"
 
 	// HTTP client
 	httpClientMapKey        = "HTTPClient."
@@ -112,6 +113,10 @@ func init() {
 	rootCmd.PersistentFlags().StringSliceP(domainBlacklistGlobsKey, "b", nil,
 		"provide a list of domain wildcards to avoid checking, e.g. -b scaleyourc?de.* -b testdomain.com")
 	_ = viper.BindPFlag(domainBlacklistGlobsKey, rootCmd.PersistentFlags().Lookup(domainBlacklistGlobsKey))
+
+	rootCmd.PersistentFlags().StringSliceP(urlCheckerPluginsKey, "p", []string{"urlcheck"},
+		"provide a list of URL checkers. Additionally, 'urlcheck-noproxy' can be used if a proxy is defined, and an additional check without a proxy makes sense. The argument sequence is the checker sequence.")
+	_ = viper.BindPFlag(urlCheckerPluginsKey, rootCmd.PersistentFlags().Lookup(urlCheckerPluginsKey))
 
 	SetUpViper()
 
