@@ -1,6 +1,18 @@
 # Release notes
 
-Notable changes will be documented here§
+Notable changes will be documented here
+
+## 0.9.19
+
+- link-checker-service:
+  - JWT authentication
+    - allow credentials in CORS
+    - configurable `LCS_USEJWTVALIDATION`, `LCS_DISABLEREQUESTLOGGING`
+    - logging the configuration before validating it
+  - configurable sequence or URL checker plugins, e.g. with and without using a proxy
+  - logging `GOMAXPROCS` on `serve`
+  - simplest health & liveness check + version endpoints are now unauthenticated and not rate-limited
+
 
 ## 0.9.18
 
