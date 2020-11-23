@@ -130,23 +130,18 @@ func (s *Server) setupRoutes() {
 	s.setUpCORS()
 	s.setUpRateLimiting()
 
+	if s.options.JWTValidationOptions != nil {
+		s.setUpJWTValidation()
+	}
+
 	if s.options.MaxURLsInRequest > 0 {
 		log.Printf("Max URLs per request: %v", s.options.MaxURLsInRequest)
 	}
 
-	checkURLsRoutes := s.server.Group("/checkUrls")
-
-	checkURLsRoutes.POST("/", s.checkURLs)
-	checkURLsRoutes.POST("/stream", s.checkURLsStream)
-
-	if s.options.JWTValidationOptions != nil {
-		s.setUpJWTValidation(checkURLsRoutes)
-	}
+	s.server.POST("/checkUrls", s.checkURLs)
+	s.server.POST("/checkUrls/stream", s.checkURLsStream)
 
 	s.server.GET("/version", s.getVersion)
-
-	s.server.GET("/livez", s.getHealthStatus)
-	s.server.GET("/readyz", s.getHealthStatus)
 }
 
 func (s *Server) checkURLs(c *gin.Context) {
@@ -348,7 +343,7 @@ func (s *Server) isBlacklisted(input URLRequest) bool {
 	return false
 }
 
-func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
+func (s *Server) setUpJWTValidation() {
 	if s.options.JWTValidationOptions == nil {
 		log.Fatal("JWT Validation not set up correctly")
 	}
@@ -369,7 +364,7 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 		log.Fatal("JWT Error:" + err.Error())
 	}
 
-	routerGroup.Use(middleware.MiddlewareFunc())
+	s.server.Use(middleware.MiddlewareFunc())
 }
 
 func (s *Server) setUpRateLimiting() {
@@ -396,11 +391,4 @@ func (s *Server) setUpRateLimiting() {
 
 func (s *Server) getVersion(c *gin.Context) {
 	c.String(http.StatusOK, infrastructure.BinaryVersion())
-}
-
-// always healthy for now
-func (s *Server) getHealthStatus(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status": "UP",
-	})
 }
