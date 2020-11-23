@@ -128,6 +128,7 @@ func (s *Server) Run() {
 
 func (s *Server) setupRoutes() {
 	s.setUpCORS()
+	s.setUpRateLimiting()
 
 	if s.options.MaxURLsInRequest > 0 {
 		log.Printf("Max URLs per request: %v", s.options.MaxURLsInRequest)
@@ -137,8 +138,6 @@ func (s *Server) setupRoutes() {
 
 	checkURLsRoutes.POST("/", s.checkURLs)
 	checkURLsRoutes.POST("/stream", s.checkURLsStream)
-
-	s.setUpRateLimiting(checkURLsRoutes)
 
 	if s.options.JWTValidationOptions != nil {
 		s.setUpJWTValidation(checkURLsRoutes)
@@ -373,7 +372,7 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 	routerGroup.Use(middleware.MiddlewareFunc())
 }
 
-func (s *Server) setUpRateLimiting(routerGroup *gin.RouterGroup) {
+func (s *Server) setUpRateLimiting() {
 	if s.options.IPRateLimit == "" {
 		log.Printf("Not using IP rate limiting")
 		return
@@ -392,7 +391,7 @@ func (s *Server) setUpRateLimiting(routerGroup *gin.RouterGroup) {
 
 	middleware := gm.NewMiddleware(limiter.New(store, rate))
 	s.server.ForwardedByClientIP = true
-	routerGroup.Use(middleware)
+	s.server.Use(middleware)
 }
 
 func (s *Server) getVersion(c *gin.Context) {
