@@ -7,7 +7,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/siemens/link-checker-service/infrastructure"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -454,25 +453,28 @@ func TestJWTAuthentication(t *testing.T) {
 	})
 	router := testServer.Detail()
 
-	// missing authentication
+	// /version is not authenticated
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/version", nil)
+	versionReq, _ := http.NewRequest("GET", "/version", nil)
+	router.ServeHTTP(w, versionReq)
+	assert.Equal(t, http.StatusOK, w.Code, "the version endpoint should not be authenticated")
+
+	// missing authentication
+	w = httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "the call without a bearer token should fail")
 
 	// correct token
-	w = httptest.NewRecorder()
 	token, _ := createJWTToken(priv)
-	req, _ = http.NewRequest("GET", "/version", nil)
+	req, _ = http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
 	req.Header.Add("Authorization", "Bearer "+token)
-	router.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code, "JWT token should have been valid")
-	body := w.Body.String()
-	assert.Contains(t, body, infrastructure.BinaryVersion())
+	response := fireAndParseRequest(t, router, req)
+	assert.Len(t, response.Urls, 2)
 
 	// bad token
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/version", nil)
+	req, _ = http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
 	req.Header.Add("Authorization", "Bearer !bad!"+token)
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "A bad JWT token should not have been valid")
