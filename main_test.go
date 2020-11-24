@@ -523,13 +523,15 @@ func TestQuickResultsShouldArriveFirst(t *testing.T) {
 	body := w.Body.String()
 	responses := parseStreamingResponses(t, body)
 	assert.Len(t, responses, 2)
+	assert.NotContains(t, responses[0].URL, "delay")
+	assert.Contains(t, responses[1].URL, "delay")
 }
 
-func parseStreamingResponses(t *testing.T, body string) []*server.CheckURLsResponse {
-	var res []*server.CheckURLsResponse
+func parseStreamingResponses(t *testing.T, body string) []*server.URLStatusResponse {
+	var res []*server.URLStatusResponse
 	for _, line := range strings.Split(body, "\n") {
 		if line != "" {
-			response := server.CheckURLsResponse{}
+			response := server.URLStatusResponse{}
 			err := json.Unmarshal([]byte(line), &response)
 			assert.NoError(t, err, "unmarshalling the response should have worked")
 			res = append(res, &response)
