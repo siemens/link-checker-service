@@ -112,9 +112,21 @@ func NewURLCheckerClient() *URLCheckerClient {
 			checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettingsNoProxy)))
 			log.Println("Added the URL checker that doesn't use a proxy")
 			break
+		case "_ok_after_1s_on_delay.com":
+			// fake client for testing
+			checkers = addChecker(checkers, &fakeURLChecker{1 * time.Second, &URLCheckResult{
+				Status:                Ok,
+				Code:                  http.StatusOK,
+				Error:                 nil,
+				FetchedAtEpochSeconds: 0,
+				BodyPatternsFound:     nil,
+				RemoteAddr:            "",
+			}})
+			log.Println("Added the _always_ok checker")
+			break
 		case "_always_ok":
 			// fake client for testing
-			checkers = addChecker(checkers, &fakeURLChecker{&URLCheckResult{
+			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
 				Status:                Ok,
 				Code:                  http.StatusOK,
 				Error:                 nil,
@@ -126,7 +138,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 			break
 		case "_always_bad":
 			// fake client for testing
-			checkers = addChecker(checkers, &fakeURLChecker{&URLCheckResult{
+			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
 				Status:                Broken,
 				Code:                  http.StatusInternalServerError,
 				Error:                 fmt.Errorf("bad"),
@@ -231,10 +243,14 @@ func getURLCheckerSettings() urlCheckerSettings {
 }
 
 type fakeURLChecker struct {
+	delay        time.Duration
 	alwaysReturn *URLCheckResult
 }
 
-func (l *fakeURLChecker) CheckURL(context.Context, string, *URLCheckResult) (*URLCheckResult, bool) {
+func (l *fakeURLChecker) CheckURL(_ctx context.Context, url string, _lastResult *URLCheckResult) (*URLCheckResult, bool) {
+	if l.delay != 0 && strings.Contains(url, "delay.com") {
+		time.Sleep(l.delay)
+	}
 	return l.alwaysReturn, true /* aborts the chain for now */
 }
 

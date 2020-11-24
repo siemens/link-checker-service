@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -120,6 +121,7 @@ func setUpViperTestConfiguration() {
 }
 
 func TestCORS(t *testing.T) {
+	setUpViperTestConfiguration()
 	const okOrigin = "http://localhost:8080"
 	const wrongOrigin = "http://localhost:80"
 	// start with CORS configuration
@@ -161,6 +163,7 @@ func TestCORS(t *testing.T) {
 }
 
 func TestRateLimiting(t *testing.T) {
+	setUpViperTestConfiguration()
 	// start a rate-limited server
 	testServer := server.NewServerWithOptions(&server.Options{
 		IPRateLimit: "10-S",
@@ -198,6 +201,7 @@ func TestRateLimiting(t *testing.T) {
 }
 
 func TestPayloadLimiting(t *testing.T) {
+	setUpViperTestConfiguration()
 	// start a rate-limited server
 	testServer := server.NewServerWithOptions(&server.Options{
 		MaxURLsInRequest: 2,
@@ -211,6 +215,7 @@ func TestPayloadLimiting(t *testing.T) {
 }
 
 func TestUrlBlacklisting(t *testing.T) {
+	setUpViperTestConfiguration()
 	testServer := server.NewServerWithOptions(&server.Options{
 		DomainBlacklistGlobs: []string{
 			"test?atter*.*",
@@ -249,6 +254,7 @@ func TestUrlBlacklisting(t *testing.T) {
 }
 
 func TestBadRequests(t *testing.T) {
+	setUpViperTestConfiguration()
 	testServer := server.NewServer()
 	router := testServer.Detail()
 
@@ -273,6 +279,7 @@ func TestBadRequests(t *testing.T) {
 }
 
 func TestDuplicateURLs(t *testing.T) {
+	setUpViperTestConfiguration()
 	viper.Set("maxConcurrentHTTPRequests", 1)
 	testServer := server.NewServer()
 	router := testServer.Detail()
@@ -312,6 +319,7 @@ func TestDuplicateURLs(t *testing.T) {
 }
 
 func TestBadResultsAreRecheckedAfterGracePeriod(t *testing.T) {
+	setUpViperTestConfiguration()
 	viper.Set("retryFailedAfter", "30s")
 	testServer := server.NewServer()
 	router := testServer.Detail()
@@ -387,6 +395,7 @@ func unmarshalCheckURLsResponse(t *testing.T, w *httptest.ResponseRecorder) serv
 }
 
 func TestEmptyRequestsShouldFail(t *testing.T) {
+	setUpViperTestConfiguration()
 	testServer := server.NewServer()
 	router := testServer.Detail()
 
@@ -420,6 +429,7 @@ func TestEmptyRequestsShouldFail(t *testing.T) {
 }
 
 func TestStreamingResponse(t *testing.T) {
+	setUpViperTestConfiguration()
 	testServer := server.NewServer()
 	router := testServer.Detail()
 
@@ -443,6 +453,7 @@ func TestStreamingResponse(t *testing.T) {
 }
 
 func TestJWTAuthentication(t *testing.T) {
+	setUpViperTestConfiguration()
 	pubKey, privKey, priv := createTestCertificates()
 	testServer := server.NewServerWithOptions(&server.Options{
 		JWTValidationOptions: &server.JWTValidationOptions{
@@ -482,4 +493,47 @@ func TestJWTAuthentication(t *testing.T) {
 	// cleanup
 	_ = os.Remove(privKey)
 	_ = os.Remove(pubKey)
+}
+
+func TestQuickResultsShouldArriveFirst(t *testing.T) {
+	if runtime.GOMAXPROCS(-1) < 2 {
+		t.Skip("To avoid sporadic failure, running this only when sufficient parallelism is given")
+		return
+	}
+	setUpViperTestConfiguration()
+	// first
+	viper.Set("urlCheckerPlugins", []string{"_ok_after_1s_on_delay.com"})
+	testServer := server.NewServer()
+	router := testServer.Detail()
+
+	// async
+	w := newCloseNotifyRecorder()
+	// first request should be delayed, and thus come second in the response
+	req := httptest.NewRequest("POST", streamingEndpoint, strings.NewReader(
+		strings.ReplaceAll(firstRequest, "google", "delay")))
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	if http.StatusOK != w.Code {
+		// "didn't continue -> abort
+		t.Fail()
+		return
+	}
+
+	body := w.Body.String()
+	responses := parseStreamingResponses(t, body)
+	assert.Len(t, responses, 2)
+}
+
+func parseStreamingResponses(t *testing.T, body string) []*server.CheckURLsResponse {
+	var res []*server.CheckURLsResponse
+	for _, line := range strings.Split(body, "\n") {
+		if line != "" {
+			response := server.CheckURLsResponse{}
+			err := json.Unmarshal([]byte(line), &response)
+			assert.NoError(t, err, "unmarshalling the response should have worked")
+			res = append(res, &response)
+		}
+	}
+	return res
 }
