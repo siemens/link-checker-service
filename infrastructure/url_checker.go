@@ -364,7 +364,8 @@ func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Conte
 		res.Code == http.StatusForbidden ||
 		res.Code == http.StatusMethodNotAllowed ||
 		res.Code == http.StatusServiceUnavailable ||
-		res.Code == http.StatusNotFound {
+		res.Code == http.StatusNotFound ||
+		res.Code == CustomHTTPErrorCode {
 		response, err := client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
 			SetContext(ctx).
