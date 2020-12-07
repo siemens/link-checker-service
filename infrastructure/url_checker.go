@@ -436,11 +436,18 @@ func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Conte
 }
 
 func shouldRetryBasedOnStatus(code int) bool {
+	if code < 300 {
+		return false
+	}
+
 	return code == http.StatusForbidden ||
 		code == http.StatusMethodNotAllowed ||
 		code == http.StatusServiceUnavailable ||
 		code == http.StatusNotFound ||
-		code == CustomHTTPErrorCode
+		code == CustomHTTPErrorCode ||
+		code == http.StatusGatewayTimeout ||
+		code == http.StatusBadGateway ||
+		code == http.StatusRequestTimeout
 }
 
 func (c *URLCheckerClient) tryHeadRequestDefault(ctx context.Context, urlToCheck string, client *resty.Client) *URLCheckResult {
