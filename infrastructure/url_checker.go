@@ -42,6 +42,7 @@ type URLCheckResult struct {
 	FetchedAtEpochSeconds int64
 	BodyPatternsFound     []string
 	RemoteAddr            string
+	CheckerTrace          []URLCheckerPluginTrace
 }
 
 // BodyPatternConfig is unmarshalled from the configuration file
@@ -105,14 +106,14 @@ func NewURLCheckerClient() *URLCheckerClient {
 		switch checkerName {
 		case "urlcheck":
 			// default client
-			checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettings)))
+			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck", buildClient(urlCheckerSettings)))
 			log.Println("Added the defaut URL checker")
 			break
 		case "urlcheck-pac":
 			if c.settings.PacScriptURL == "" {
 				panic("Cannot instantiate a 'urlcheck-pac' checkwer without a proxy auto-config script configured")
 			}
-			checkers = addChecker(checkers, newLocalURLChecker(c, nil))
+			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
 			log.Println("Added the PAC file based URL checker")
 			break
 		case "urlcheck-noproxy":
@@ -123,7 +124,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 
 			urlCheckerSettingsNoProxy := urlCheckerSettings
 			urlCheckerSettingsNoProxy.ProxyURL = ""
-			checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettingsNoProxy)))
+			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-noproxy", buildClient(urlCheckerSettingsNoProxy)))
 			log.Println("Added the URL checker that doesn't use a proxy")
 			break
 		case "_ok_after_1s_on_delay.com":
@@ -135,7 +136,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 				FetchedAtEpochSeconds: 0,
 				BodyPatternsFound:     nil,
 				RemoteAddr:            "",
-			}})
+			}, "_ok_after_1s_on_delay.com"})
 			log.Println("Added the _always_ok checker")
 			break
 		case "_always_ok":
@@ -147,7 +148,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 				FetchedAtEpochSeconds: 0,
 				BodyPatternsFound:     nil,
 				RemoteAddr:            "",
-			}})
+			}, "_always_ok"})
 			log.Println("Added the _always_ok checker")
 			break
 		case "_always_bad":
@@ -159,7 +160,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 				FetchedAtEpochSeconds: 0,
 				BodyPatternsFound:     nil,
 				RemoteAddr:            "",
-			}})
+			}, "_always_bad"})
 			log.Println("Added the _always_bad checker")
 			break
 		default:
@@ -277,6 +278,11 @@ func getURLCheckerSettings() urlCheckerSettings {
 type fakeURLChecker struct {
 	delay        time.Duration
 	alwaysReturn *URLCheckResult
+	name         string
+}
+
+func (l *fakeURLChecker) Name() string {
+	return l.name
 }
 
 func (l *fakeURLChecker) CheckURL(_ctx context.Context, url string, _lastResult *URLCheckResult) (*URLCheckResult, bool) {
@@ -286,16 +292,22 @@ func (l *fakeURLChecker) CheckURL(_ctx context.Context, url string, _lastResult 
 	return l.alwaysReturn, true /* aborts the chain for now */
 }
 
-func newLocalURLChecker(c *URLCheckerClient, client *resty.Client) *localURLChecker {
+func newLocalURLChecker(c *URLCheckerClient, name string, client *resty.Client) *localURLChecker {
 	return &localURLChecker{
 		c:      c,
 		client: client,
+		name:   name,
 	}
 }
 
 type localURLChecker struct {
 	c      *URLCheckerClient
 	client *resty.Client
+	name   string
+}
+
+func (l *localURLChecker) Name() string {
+	return l.name
 }
 
 func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastResult *URLCheckResult) (*URLCheckResult, bool) {
@@ -329,23 +341,35 @@ func (l *localURLChecker) autoSelectClientFor(urlToCheck string) *resty.Client {
 	return buildClient(tmpSettings)
 }
 
+type URLCheckerPluginTrace struct {
+	Name string
+	Code int
+}
+
 // CheckURL checks a single URL
 func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckResult {
 	var lastRes *URLCheckResult = nil
+	var checkerTrace []URLCheckerPluginTrace
 
 	for pos, currentChecker := range c.checkerPlugins {
 		res, shouldAbort := currentChecker.CheckURL(ctx, url, lastRes)
+		checkerTrace = append(checkerTrace, URLCheckerPluginTrace{
+			Name: currentChecker.Name(),
+			Code: res.Code,
+		})
 
 		if pos == 0 && res == nil {
 			panic("first checker should never return nil")
 		}
 
-		if shouldAbort {
-			return res
-		}
-
 		lastRes = res
+
+		if shouldAbort || !shouldRetryBasedOnStatus(lastRes.Code) {
+			break
+		}
 	}
+
+	lastRes.CheckerTrace = checkerTrace
 
 	return lastRes
 }
