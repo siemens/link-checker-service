@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/darren/gpac"
 	"log"
 	"net"
 	"net/http"
@@ -66,6 +67,7 @@ type urlCheckerSettings struct {
 	BodyPatterns          []bodyPattern
 	EnableRequestTracing  bool
 	UrlCheckerPlugins     []string
+	PacScriptURL          string
 }
 
 // URLChecker interface that all layers should conform to
@@ -80,6 +82,7 @@ type URLCheckerClient struct {
 	settings           urlCheckerSettings
 	dnsCache           *cache.Cache
 	checkerPlugins     []URLCheckerPlugin
+	autoProxy          *gpac.Parser
 }
 
 // NewURLCheckerClient instantiates a new basic URL checking client
@@ -91,6 +94,10 @@ func NewURLCheckerClient() *URLCheckerClient {
 		dnsCache: cache.New(defaultCacheExpirationInterval, defaultCacheCleanupInterval),
 	}
 
+	if c.settings.PacScriptURL != "" {
+		c.autoProxy = parsePacScript(c.settings.PacScriptURL)
+	}
+
 	var checkers []URLCheckerPlugin
 
 	// for now, a valid checker may be configured twice, for whatever reason
@@ -100,6 +107,13 @@ func NewURLCheckerClient() *URLCheckerClient {
 			// default client
 			checkers = addChecker(checkers, newLocalURLChecker(c, buildClient(urlCheckerSettings)))
 			log.Println("Added the defaut URL checker")
+			break
+		case "urlcheck-pac":
+			if c.settings.PacScriptURL == "" {
+				panic("Cannot instantiate a 'urlcheck-pac' checkwer without a proxy auto-config script configured")
+			}
+			checkers = addChecker(checkers, newLocalURLChecker(c, nil))
+			log.Println("Added the PAC file based URL checker")
 			break
 		case "urlcheck-noproxy":
 			// if proxy is defined, add one without the proxy as fallback
@@ -162,6 +176,20 @@ func NewURLCheckerClient() *URLCheckerClient {
 	return c
 }
 
+func parsePacScript(scriptURL string) *gpac.Parser {
+	res, err := resty.New().R().Get(scriptURL)
+	if err != nil {
+		panic(fmt.Errorf("Could not fetch a PAC script from %v: %v", scriptURL, err.Error()))
+	}
+	log.Printf("Read PAC script from %v", scriptURL)
+	script := string(res.Body())
+	pac, err := gpac.New(script)
+	if err != nil {
+		panic(fmt.Errorf("Could not parse the PAC script: %v", err.Error()))
+	}
+	return pac
+}
+
 func addChecker(checkers []URLCheckerPlugin, plugin URLCheckerPlugin) []URLCheckerPlugin {
 	if plugin != nil {
 		return append(checkers, plugin)
@@ -187,6 +215,10 @@ func getURLCheckerSettings() urlCheckerSettings {
 			log.Printf("URLCheckerClient is using a proxy: %v", proxyURL)
 			s.ProxyURL = proxyURL
 		}
+	}
+
+	if pacScriptURL := viper.GetString("pacScriptURL"); pacScriptURL != "" {
+		s.PacScriptURL = pacScriptURL
 	}
 
 	s.MaxRedirectsCount = viper.GetUint("HTTPClient.maxRedirectsCount")
@@ -267,10 +299,22 @@ type localURLChecker struct {
 }
 
 func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastResult *URLCheckResult) (*URLCheckResult, bool) {
-	if lastResult == nil || (lastResult.Code == http.StatusBadGateway) {
-		return l.c.checkURL(ctx, urlToCheck, l.client)
+	if lastResult == nil || shouldRetryBasedOnStatus(lastResult.Code) {
+		client := l.client
+		if client == nil && l.c.settings.PacScriptURL != "" {
+			client = l.autoSelectClientFor(urlToCheck)
+		}
+		if client == nil {
+			panic("cannot instantiate a HTTP client. Please check the configuration")
+		}
+		return l.c.checkURL(ctx, urlToCheck, client)
 	}
 	return lastResult, false
+}
+
+func (l *localURLChecker) autoSelectClientFor(check string) *resty.Client {
+	tmpSettings := l.c.settings
+	return buildClient(tmpSettings)
 }
 
 // CheckURL checks a single URL
@@ -361,11 +405,7 @@ func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Conte
 	var body string
 	// some sites don't allow HEAD requests, try a GET
 	if c.settings.SearchForBodyPatterns ||
-		res.Code == http.StatusForbidden ||
-		res.Code == http.StatusMethodNotAllowed ||
-		res.Code == http.StatusServiceUnavailable ||
-		res.Code == http.StatusNotFound ||
-		res.Code == CustomHTTPErrorCode {
+		shouldRetryBasedOnStatus(res.Code) {
 		response, err := client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
 			SetContext(ctx).
@@ -381,6 +421,14 @@ func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Conte
 		res = c.searchForBodyPatterns(res, body)
 	}
 	return res
+}
+
+func shouldRetryBasedOnStatus(code int) bool {
+	return code == http.StatusForbidden ||
+		code == http.StatusMethodNotAllowed ||
+		code == http.StatusServiceUnavailable ||
+		code == http.StatusNotFound ||
+		code == CustomHTTPErrorCode
 }
 
 func (c *URLCheckerClient) tryHeadRequestDefault(ctx context.Context, urlToCheck string, client *resty.Client) *URLCheckResult {

@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.6.4
+	github.com/darren/gpac v0.0.0-20200702020854-d9398608e64a
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-contrib/cors v1.3.1
