@@ -6,3 +6,10 @@ services:
       context: ./
     ports:
       - "8080:8080"
+
+  sample-ui:
+    image: github.com/siemens/link-checker-service/sample-ui
+    build:
+      context: ./test/jquery_example/
+    ports:
+      - "8092:8092"

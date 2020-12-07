@@ -12,7 +12,7 @@ Endpoints:
 - `/version` returns the server version
 - `/livez`, `/readyz` health checks
 
-## Quickstart
+## Quickstart Options
 
 - get the binary into `$GOPATH/bin`
 
@@ -29,13 +29,13 @@ link-checker-service serve
 
 - download it from the [releases](https://github.com/siemens/link-checker-service/releases/latest)
 
-- run the service dockerized, without installing Go:
+- run the service dockerized, without installing Go, and navigate to the [sample UI](http://localhost:8092):
 
 ```bash
 docker-compose up --build
 ```
 
-- run from this source:
+- run from source:
 
 ```bash
 go run . serve
