@@ -105,6 +105,12 @@ func TestDefaultURLCheckerClientPlugins(t *testing.T) {
 		c = NewURLCheckerClient()
 		assert.Equal(t, []string{"urlcheck", "urlcheck-noproxy"}, c.settings.UrlCheckerPlugins)
 	})
+
+	// adding an unknown checker
+	assert.Panics(t, func() {
+		viper.Set("urlCheckerPlugins", []string{"urlcheck", "urlcheck-unknown"})
+		NewURLCheckerClient()
+	})
 }
 
 func TestCheckerSequenceMatters(t *testing.T) {
