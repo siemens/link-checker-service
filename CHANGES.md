@@ -8,6 +8,7 @@ Notable changes will be documented here
   - a new URL checker plugin: `urlcheck-pac`, configured via `pacScriptURL`
     for more complex proxy scenarios
   - more reasons to retry a check with a different checker plugin added
+  - checker plugins are now traced in the `check_trace` field of the `URLStatusResponse`
 
 ## 0.9.19
 
