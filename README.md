@@ -176,6 +176,27 @@ certificate to be configured, even though it is not used for validation.
 
 See the [configuration file](.link-checker-service.toml) and the `serve` command help for detailed settings.
 
+### URL Checker Plugins
+
+URLs may be checked using different methods, e.g. with an HTTP client with or without using a proxy.
+Depending on the connectivity available to the link checker service, the sequence of checks can be influenced
+via a configuration of the URL Checker Plugins.
+
+E.g.:
+
+```toml
+urlCheckerPlugins = [
+    "urlcheck-noproxy",
+    "urlcheck",
+    "urlcheck-pac",
+]
+```
+
+By default, the `urlcheck` plugin is used, which uses an HTTP client with a proxy, if one is configured,
+and without one, if not. `urlcheck-noproxy` uses a client explicitly without a proxy set. 
+`urlcheck-pac` generates a client for each URL depending on the proxy configuration returned via the
+PAC script, configured via the `pacScriptURL` option. Only the first proxy returned by the PAC script will be used. 
+
 ### Advanced Configuration
 
 Link checker can optionally detect patterns within successful HTTP response bodies, e.g. in pages with authentication.
