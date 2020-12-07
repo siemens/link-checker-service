@@ -18,7 +18,7 @@ Notable changes will be documented here
     - logging the configuration before validating it
   - configurable sequence or URL checker plugins, e.g. with and without using a proxy
   - logging `GOMAXPROCS` on `serve`
-  - simplest health & liveness check + version endpoints are now unauthenticated and not rate-limited
+  - the simplest health & liveness check + version endpoints are now unauthenticated and not rate-limited
 
 
 ## 0.9.18
