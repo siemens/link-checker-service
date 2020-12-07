@@ -73,7 +73,7 @@ Start the server, e.g. `link-checker-service serve`, and send the following requ
 }
 ```
 
-e.g. via [HTTPie](https://httpie.org/docs#explicit-json) on windows cmd
+e.g. via [HTTPie](https://httpie.org/docs#explicit-json) on Windows cmd
 
 ```cmd
 http POST localhost:8080/checkUrls urls:="[{"""url""":"""https://google.com""","""context""":"""0"""},{"""url""":"""https://baskldjha.com/loaksd""","""context""":"""1"""}]"

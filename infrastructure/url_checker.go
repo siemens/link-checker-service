@@ -164,7 +164,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 			log.Println("Added the _always_bad checker")
 			break
 		default:
-			panic(fmt.Errorf("Unknown checker: %v", checkerName))
+			panic(fmt.Errorf("unknown checker: %v", checkerName))
 		}
 	}
 
@@ -180,13 +180,13 @@ func NewURLCheckerClient() *URLCheckerClient {
 func parsePacScript(scriptURL string) *gpac.Parser {
 	res, err := resty.New().R().Get(scriptURL)
 	if err != nil {
-		panic(fmt.Errorf("Could not fetch a PAC script from %v: %v", scriptURL, err.Error()))
+		panic(fmt.Errorf("could not fetch a PAC script from %v: %v", scriptURL, err.Error()))
 	}
 	log.Printf("Read PAC script from %v", scriptURL)
 	script := string(res.Body())
 	pac, err := gpac.New(script)
 	if err != nil {
-		panic(fmt.Errorf("Could not parse the PAC script: %v", err.Error()))
+		panic(fmt.Errorf("could not parse the PAC script: %v", err.Error()))
 	}
 	return pac
 }
@@ -285,7 +285,7 @@ func (l *fakeURLChecker) Name() string {
 	return l.name
 }
 
-func (l *fakeURLChecker) CheckURL(_ctx context.Context, url string, _lastResult *URLCheckResult) (*URLCheckResult, bool) {
+func (l *fakeURLChecker) CheckURL(_ context.Context, url string, _ *URLCheckResult) (*URLCheckResult, bool) {
 	if l.delay != 0 && strings.Contains(url, "delay.com") {
 		time.Sleep(l.delay)
 	}
@@ -369,7 +369,9 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 		}
 	}
 
-	lastRes.CheckerTrace = checkerTrace
+	if lastRes != nil {
+		lastRes.CheckerTrace = checkerTrace
+	}
 
 	return lastRes
 }
