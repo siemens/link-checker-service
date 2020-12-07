@@ -112,8 +112,13 @@ func TestCheckerSequenceMatters(t *testing.T) {
 	viper.Set("urlCheckerPlugins", []string{"_always_ok", "_always_bad"})
 	res := NewURLCheckerClient().CheckURL(context.Background(), "http://lkasdjfasf.com/123987")
 	assert.Equal(t, Ok, res.Status, "the result should've been Ok as _always_ok comes first and aborts the chain")
+	assert.Equal(t, []URLCheckerPluginTrace{
+		{Name: "_always_ok", Code: 200},
+	}, res.CheckerTrace)
 
 	viper.Set("urlCheckerPlugins", []string{"_always_bad", "_always_ok"})
 	res = NewURLCheckerClient().CheckURL(context.Background(), "http://lkasdjfasf.com/123987")
 	assert.NotEqual(t, Ok, res.Status, "the result should not have been Ok as _always_bad comes first and aborts the chain")
+	assert.Len(t, res.CheckerTrace, 1)
+	assert.Equal(t, "_always_bad", res.CheckerTrace[0].Name)
 }

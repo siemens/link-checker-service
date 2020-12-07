@@ -321,8 +321,20 @@ func (s *Server) checkURL(ctx context.Context, url URLRequest) URLStatusResponse
 		FetchedAtEpochSeconds: checkResult.FetchedAtEpochSeconds,
 		BodyPatternsFound:     checkResult.BodyPatternsFound,
 		RemoteAddr:            checkResult.RemoteAddr,
+		CheckTrace:            translateCheckerTrace(checkResult.CheckerTrace),
 	}
 	return urlStatus
+}
+
+func translateCheckerTrace(trace []infrastructure.URLCheckerPluginTrace) []URLCheckTraceResponse {
+	var res []URLCheckTraceResponse
+	for _, traceRes := range trace {
+		res = append(res, URLCheckTraceResponse{
+			Name: traceRes.Name,
+			Code: traceRes.Code,
+		})
+	}
+	return res
 }
 
 func urlBlacklisted(url URLRequest) URLStatusResponse {

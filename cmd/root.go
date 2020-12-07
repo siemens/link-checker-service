@@ -36,6 +36,7 @@ const (
 	// HTTP client
 	httpClientMapKey        = "HTTPClient."
 	proxyKey                = "proxy"
+	pacScriptURLKey         = "pacScriptURL"
 	maxRedirectsCountKey    = "maxRedirectsCount"
 	timeoutSecondsKey       = "timeoutSeconds"
 	userAgentKey            = "userAgent"
@@ -80,6 +81,8 @@ func init() {
 	// HTTP client
 	rootCmd.PersistentFlags().StringP(proxyKey, "", "", "HTTP client: proxy server to use, e.g. http://myproxy:8080")
 	_ = viper.BindPFlag(proxyKey, rootCmd.PersistentFlags().Lookup(proxyKey))
+	rootCmd.PersistentFlags().StringP(pacScriptURLKey, "", "", "HTTP client: PAC script URL, e.g. http://myproxy/proxy.pac")
+	_ = viper.BindPFlag(pacScriptURLKey, rootCmd.PersistentFlags().Lookup(pacScriptURLKey))
 
 	rootCmd.PersistentFlags().Uint(maxRedirectsCountKey, 15, "HTTP client: maximum number of redirects to follow")
 	_ = viper.BindPFlag(httpClientMapKey+maxRedirectsCountKey, rootCmd.PersistentFlags().Lookup(maxRedirectsCountKey))

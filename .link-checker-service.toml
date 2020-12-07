@@ -2,6 +2,8 @@
 # This file is not subject to the MPLv2 license, and can be edited freely.
 
 # proxy = "http://<some-proxy>:<port>"
+# pacScriptURL = "http://<some-proxy>/<some-proxy.pac>"
+
 
 # uncomment to bind to a custom address
 # bindAddress = "127.0.0.1:8080"

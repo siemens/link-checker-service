@@ -16,6 +16,12 @@ type CheckURLsRequest struct {
 	Urls []URLRequest `json:"urls"`
 }
 
+// URLCheckTraceResponse reflects a trace of a single url checker plugin run
+type URLCheckTraceResponse struct {
+	Name string
+	Code int
+}
+
 // URLStatusResponse is the JSON response structure for one URL
 type URLStatusResponse struct {
 	// URLRequest is echoed back for correlation purposes
@@ -32,6 +38,8 @@ type URLStatusResponse struct {
 	BodyPatternsFound []string `json:"body_patterns_found"`
 	// RemoteAddr is filled with the resolved address when `enableRequestTracing` is configured
 	RemoteAddr string `json:"remote_addr,omitempty"`
+	// CheckTrace is a trace of the url checker plugin responses
+	CheckTrace []URLCheckTraceResponse `json:"check_trace"`
 }
 
 // CheckURLsResponse is a JSON structure for the bulk URL check response

@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.20
+
+- link-checker-service:
+  - a new URL checker plugin: `urlcheck-pac`, configured via `pacScriptURL`
+    for more complex proxy scenarios
+  - more reasons to retry a check with a different checker plugin added
+  - checker plugins are now traced in the `check_trace` field of the `URLStatusResponse`
+
 ## 0.9.19
 
 - link-checker-service:
@@ -11,7 +19,7 @@ Notable changes will be documented here
     - logging the configuration before validating it
   - configurable sequence or URL checker plugins, e.g. with and without using a proxy
   - logging `GOMAXPROCS` on `serve`
-  - simplest health & liveness check + version endpoints are now unauthenticated and not rate-limited
+  - the simplest health & liveness check + version endpoints are now unauthenticated and not rate-limited
 
 
 ## 0.9.18
