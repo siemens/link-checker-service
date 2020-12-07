@@ -9,7 +9,6 @@ Endpoints:
 - `/checkUrls` checks a batch at once
 - `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
 - `/version` returns the server version
-- `/version` returns the server version
 - `/livez`, `/readyz` health checks
 
 ## Quickstart Options
