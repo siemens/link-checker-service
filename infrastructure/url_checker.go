@@ -111,7 +111,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 			break
 		case "urlcheck-pac":
 			if c.settings.PacScriptURL == "" {
-				panic("Cannot instantiate a 'urlcheck-pac' checkwer without a proxy auto-config script configured")
+				panic("Cannot instantiate a 'urlcheck-pac' checker without a proxy auto-config script configured")
 			}
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
 			log.Println("Added the PAC file based URL checker")
