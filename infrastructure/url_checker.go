@@ -312,8 +312,20 @@ func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastR
 	return lastResult, false
 }
 
-func (l *localURLChecker) autoSelectClientFor(check string) *resty.Client {
+func (l *localURLChecker) autoSelectClientFor(urlToCheck string) *resty.Client {
 	tmpSettings := l.c.settings
+	proxies, err := l.c.autoProxy.FindProxy(urlToCheck)
+	if err == nil && len(proxies) > 0 {
+		// choosing the first available proxy
+		for _, proxy := range proxies {
+			if proxy.Type == "PROXY" {
+				tmpSettings.ProxyURL = proxies[0].URL()
+				break
+			}
+		}
+	} else {
+		log.Printf("Could not find a proxy for %v", urlToCheck)
+	}
 	return buildClient(tmpSettings)
 }
 
