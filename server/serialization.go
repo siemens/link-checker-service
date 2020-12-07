@@ -18,8 +18,8 @@ type CheckURLsRequest struct {
 
 // URLCheckTraceResponse reflects a trace of a single url checker plugin run
 type URLCheckTraceResponse struct {
-	Name string
-	Code int
+	Name string `json:"name"`
+	Code int    `json:"code"`
 }
 
 // URLStatusResponse is the JSON response structure for one URL
