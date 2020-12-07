@@ -2,6 +2,13 @@
 
 Notable changes will be documented here
 
+## 0.9.20
+
+- link-checker-service:
+  - a new URL checker plugin: `urlcheck-pac`, configured via `pacScriptURL`
+    for more complex proxy scenarios
+  - more reasons to retry a check with a different checker plugin added
+
 ## 0.9.19
 
 - link-checker-service:
