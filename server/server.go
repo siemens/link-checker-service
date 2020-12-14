@@ -322,6 +322,7 @@ func (s *Server) checkURL(ctx context.Context, url URLRequest) URLStatusResponse
 		BodyPatternsFound:     checkResult.BodyPatternsFound,
 		RemoteAddr:            checkResult.RemoteAddr,
 		CheckTrace:            translateCheckerTrace(checkResult.CheckerTrace),
+		ElapsedMs:             checkResult.ElapsedMs,
 	}
 	return urlStatus
 }

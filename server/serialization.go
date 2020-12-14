@@ -40,6 +40,8 @@ type URLStatusResponse struct {
 	RemoteAddr string `json:"remote_addr,omitempty"`
 	// CheckTrace is a trace of the url checker plugin responses
 	CheckTrace []URLCheckTraceResponse `json:"check_trace"`
+	// ElapsedMs is the total duration in milliseconds of the uncached URL check
+	ElapsedMs int64
 }
 
 // CheckURLsResponse is a JSON structure for the bulk URL check response

@@ -80,6 +80,7 @@ func TestCommonCheckUrlsUsage(t *testing.T) {
 	okResponse1 := responseContaining("google", response)
 	assert.Equal(t, "1", okResponse1.Context)
 	assert.Equal(t, "", okResponse1.Error)
+	assert.Greater(t, okResponse1.ElapsedMs, int64(0))
 
 	// sleep for a bit
 	time.Sleep(2 * time.Second)
