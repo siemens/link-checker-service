@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.21
+
+- link-checker-service:
+  - tracing the elapsed time in total per URL and per URL checker plugin (`elapsed_ms` response fields)
+- sample UI:
+  - exporting the elapsed total time to CSV
+  - exporting the URL checker plugin trace as a JSON blob to CSV 
+
 ## 0.9.20
 
 - link-checker-service:
