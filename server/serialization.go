@@ -18,8 +18,9 @@ type CheckURLsRequest struct {
 
 // URLCheckTraceResponse reflects a trace of a single url checker plugin run
 type URLCheckTraceResponse struct {
-	Name string `json:"name"`
-	Code int    `json:"code"`
+	Name      string `json:"name"`
+	Code      int    `json:"code"`
+	ElapsedMs int64  `json:"elapsed_ms"`
 }
 
 // URLStatusResponse is the JSON response structure for one URL
@@ -41,7 +42,7 @@ type URLStatusResponse struct {
 	// CheckTrace is a trace of the url checker plugin responses
 	CheckTrace []URLCheckTraceResponse `json:"check_trace"`
 	// ElapsedMs is the total duration in milliseconds of the uncached URL check
-	ElapsedMs int64
+	ElapsedMs int64 `json:"elapsed_ms"`
 }
 
 // CheckURLsResponse is a JSON structure for the bulk URL check response

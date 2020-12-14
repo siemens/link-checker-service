@@ -331,8 +331,9 @@ func translateCheckerTrace(trace []infrastructure.URLCheckerPluginTrace) []URLCh
 	var res []URLCheckTraceResponse
 	for _, traceRes := range trace {
 		res = append(res, URLCheckTraceResponse{
-			Name: traceRes.Name,
-			Code: traceRes.Code,
+			Name:      traceRes.Name,
+			Code:      traceRes.Code,
+			ElapsedMs: traceRes.ElapsedMs,
 		})
 	}
 	return res
