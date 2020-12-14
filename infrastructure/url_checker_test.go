@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
 
@@ -127,4 +128,15 @@ func TestCheckerSequenceMatters(t *testing.T) {
 	assert.NotEqual(t, Ok, res.Status, "the result should not have been Ok as _always_bad comes first and aborts the chain")
 	assert.Len(t, res.CheckerTrace, 1)
 	assert.Equal(t, "_always_bad", res.CheckerTrace[0].Name)
+}
+
+func TestResponseTimeout(t *testing.T) {
+	setUpViperTestConfiguration()
+	viper.Set("HTTPClient.timeoutSeconds", uint(1))
+	start := time.Now()
+	res := NewURLCheckerClient().CheckURL(context.Background(), "https://httpbin.org/delay/3")
+	elapsed := time.Since(start)
+	assert.True(t, elapsed < 3*time.Second, "the response should have been aborted after one second")
+	assert.NotNil(t, res.Error, "the response should have failed due to the abort")
+	assert.NotEqual(t, http.StatusOK, res.Code)
 }
