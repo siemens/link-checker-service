@@ -137,6 +137,8 @@ func TestResponseTimeout(t *testing.T) {
 	res := NewURLCheckerClient().CheckURL(context.Background(), "https://httpbin.org/delay/3")
 	elapsed := time.Since(start)
 	assert.True(t, elapsed < 3*time.Second, "the response should have been aborted after one second")
+	assert.Greater(t, res.ElapsedMs, int64(1000), "at least 1 second must have passed")
+	assert.Less(t, res.ElapsedMs, int64(3000), "at most 3 seconds must have passed")
 	assert.NotNil(t, res.Error, "the response should have failed due to the abort")
 	assert.NotEqual(t, http.StatusOK, res.Code)
 }

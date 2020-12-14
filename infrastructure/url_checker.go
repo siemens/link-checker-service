@@ -43,6 +43,7 @@ type URLCheckResult struct {
 	BodyPatternsFound     []string
 	RemoteAddr            string
 	CheckerTrace          []URLCheckerPluginTrace
+	ElapsedMs             int64
 }
 
 // BodyPatternConfig is unmarshalled from the configuration file
@@ -350,6 +351,7 @@ type URLCheckerPluginTrace struct {
 func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckResult {
 	var lastRes *URLCheckResult = nil
 	var checkerTrace []URLCheckerPluginTrace
+	start := time.Now()
 
 	for pos, currentChecker := range c.checkerPlugins {
 		res, shouldAbort := currentChecker.CheckURL(ctx, url, lastRes)
@@ -372,6 +374,9 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 	if lastRes != nil {
 		lastRes.CheckerTrace = checkerTrace
 	}
+
+	elapsed := time.Since(start)
+	lastRes.ElapsedMs = int64(elapsed / time.Millisecond)
 
 	return lastRes
 }
