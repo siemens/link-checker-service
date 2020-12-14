@@ -99,7 +99,9 @@ function urlToRow(url) {
         url.error ? url.error : "",
         url.timestamp,
         url.remote_addr ? url.remote_addr : "",
-        bodyPatternsFound(url)
+        url.elapsed_ms ? url.elapsed_ms : 0,
+        bodyPatternsFound(url),
+        url.check_trace ? JSON.stringify(url.check_trace) : "",
     ];
     return $(row).map(function(_,e){return csvValue(e);}).toArray();
 }
@@ -115,7 +117,9 @@ function getCSVResults() {
         "error",
         "timestamp",
         "remote_addr",
-        "body_patterns_found"
+        "elapsed_ms",
+        "body_patterns_found",
+        "check_trace"
     ];
     var urlRows = $(window.results).map(function(_,url) {return [urlToRow(url)];}).toArray();
     var allrows = $([delimHeader, header].concat(urlRows)).map(function(_,row){return $(row).toArray().join(delimiter);}).toArray();
