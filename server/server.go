@@ -334,6 +334,7 @@ func translateCheckerTrace(trace []infrastructure.URLCheckerPluginTrace) []URLCh
 			Name:      traceRes.Name,
 			Code:      traceRes.Code,
 			ElapsedMs: traceRes.ElapsedMs,
+			Error:     traceRes.Error,
 		})
 	}
 	return res

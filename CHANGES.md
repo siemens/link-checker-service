@@ -6,6 +6,7 @@ Notable changes will be documented here
 
 - link-checker-service:
   - tracing the elapsed time in total per URL and per URL checker plugin (`elapsed_ms` response fields)
+  - tracing the error message from each URL checker plugin
 - sample UI:
   - exporting the elapsed total time to CSV
   - exporting the URL checker plugin trace as a JSON blob to CSV 

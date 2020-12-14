@@ -346,6 +346,7 @@ type URLCheckerPluginTrace struct {
 	Name      string
 	Code      int
 	ElapsedMs int64
+	Error     string
 }
 
 // CheckURL checks a single URL
@@ -353,15 +354,20 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 	var lastRes *URLCheckResult = nil
 	var checkerTrace []URLCheckerPluginTrace
 	start := time.Now()
+	errorMessage := ""
 
 	for pos, currentChecker := range c.checkerPlugins {
 		checkerStart := time.Now()
 		res, shouldAbort := currentChecker.CheckURL(ctx, url, lastRes)
 		checkerElapsed := time.Since(checkerStart)
+		if res.Error != nil {
+			errorMessage = res.Error.Error()
+		}
 		checkerTrace = append(checkerTrace, URLCheckerPluginTrace{
 			Name:      currentChecker.Name(),
 			Code:      res.Code,
 			ElapsedMs: int64(checkerElapsed / time.Millisecond),
+			Error:     errorMessage,
 		})
 
 		if pos == 0 && res == nil {

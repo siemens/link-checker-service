@@ -21,6 +21,7 @@ type URLCheckTraceResponse struct {
 	Name      string `json:"name"`
 	Code      int    `json:"code"`
 	ElapsedMs int64  `json:"elapsed_ms"`
+	Error     string `json:"error,omitempty"`
 }
 
 // URLStatusResponse is the JSON response structure for one URL
