@@ -217,7 +217,6 @@ regex = "google"
 
 The names of the found patterns will be available in the URL check results.
 
-
 ### Using a Custom Configuration
 
 e.g. when a proxy is needed for the HTTP client, see the sample [.link-checker-service.toml](.link-checker-service.toml),
