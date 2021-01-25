@@ -381,7 +381,7 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,
 		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm,
 		HTTPStatusMessageFunc: func(e error, c *gin.Context) string {
-			log.Printf("Token validation error: ", e)
+			log.Printf("Token validation error: %v", e)
 			return fmt.Sprintf("Token validation error: unauthorized")
 		},
 	})
