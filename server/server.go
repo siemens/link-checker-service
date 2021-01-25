@@ -7,6 +7,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -379,6 +380,10 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 		PrivKeyFile:      s.options.JWTValidationOptions.PrivKeyFile,
 		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,
 		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm,
+		HTTPStatusMessageFunc: func(e error, c *gin.Context) string {
+			log.Printf("Token validation error: ", e)
+			return fmt.Sprintf("Token validation error: unauthorized")
+		},
 	})
 
 	if err != nil {
