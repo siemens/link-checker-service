@@ -2,7 +2,7 @@
 
 The Link Checker web service runs cached and otherwise optimized broken link checks.
 
-[![Build Status](https://travis-ci.org/siemens/link-checker-service.svg?branch=master)](https://travis-ci.org/siemens/link-checker-service) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service)
+[![Build Status](https://travis-ci.org/siemens/link-checker-service.svg?branch=master)](https://travis-ci.org/siemens/link-checker-service) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service) ![CodeQL](https://github.com/siemens/link-checker-service/workflows/CodeQL/badge.svg)
 
 Endpoints:
 
@@ -192,9 +192,9 @@ urlCheckerPlugins = [
 ```
 
 By default, the `urlcheck` plugin is used, which uses an HTTP client with a proxy, if one is configured,
-and without one, if not. `urlcheck-noproxy` uses a client explicitly without a proxy set. 
+and without one, if not. `urlcheck-noproxy` uses a client explicitly without a proxy set.
 `urlcheck-pac` generates a client for each URL depending on the proxy configuration returned via the
-PAC script, configured via the `pacScriptURL` option. Only the first proxy returned by the PAC script will be used. 
+PAC script, configured via the `pacScriptURL` option. Only the first proxy returned by the PAC script will be used.
 
 ### Advanced Configuration
 
