@@ -108,7 +108,7 @@ func (c *CachedURLChecker) CheckURL(ctx context.Context, url string) *URLCheckRe
 	res := c.ccLimitedChecker.CheckURL(ctx, url)
 	ttl := c.cacheSettings.cacheExpirationInterval
 	if res.Status != Ok {
-		ttl = c.cacheSettings.retryFailedAfter * time.Second
+		ttl = c.cacheSettings.retryFailedAfter
 	}
 	if res.Status != Dropped {
 		//c.cache.Set(url, res, cache.DefaultExpiration)
