@@ -7,6 +7,8 @@ package infrastructure
 
 import (
 	"context"
+	"fmt"
+	"github.com/dgraph-io/ristretto"
 	"log"
 	"time"
 
@@ -22,8 +24,11 @@ const defaultRetryFailedAfter = 30 * time.Second
 // CachedURLChecker wraps a concurrency-limited URL checker
 type CachedURLChecker struct {
 	cache                   *cache.Cache
-	ccLimitedChecker        *CCLimitedURLChecker
+	cacheSettings           cacheSettings
+	ristrettoCache          *ristretto.Cache
 	retryFailedAfterSeconds int64
+
+	ccLimitedChecker *CCLimitedURLChecker
 }
 
 type cacheSettings struct {
@@ -34,9 +39,22 @@ type cacheSettings struct {
 
 // NewCachedURLChecker creates a new cached URL checker instance
 func NewCachedURLChecker() *CachedURLChecker {
+	// https://github.com/dgraph-io/ristretto#Config
+	ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
+		NumCounters: 1e6,     // number of keys to track frequency of (~10x 100k links).
+		MaxCost:     1 << 30, // maximum cost of cache (1GB).
+		BufferItems: 64,      // number of keys per Get buffer: as recommended
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(ristrettoCache)
+
 	settings := fetchCachedURLCheckerSettings()
 	checker := CachedURLChecker{
 		cache:                   cache.New(settings.cacheExpirationInterval, settings.cacheCleanupInterval),
+		ristrettoCache:          ristrettoCache,
+		cacheSettings:           settings,
 		ccLimitedChecker:        NewCCLimitedURLChecker(),
 		retryFailedAfterSeconds: int64(settings.retryFailedAfter.Seconds()),
 	}
@@ -74,7 +92,8 @@ func fetchCachedURLCheckerSettings() cacheSettings {
 
 // CheckURL checks the desired URL
 func (c *CachedURLChecker) CheckURL(ctx context.Context, url string) *URLCheckResult {
-	value, found := c.cache.Get(url)
+	//value, found := c.cache.Get(url)
+	value, found := c.ristrettoCache.Get(url)
 
 	if found {
 		res := value.(*URLCheckResult)
@@ -87,8 +106,13 @@ func (c *CachedURLChecker) CheckURL(ctx context.Context, url string) *URLCheckRe
 
 	// otherwise, do the check & store
 	res := c.ccLimitedChecker.CheckURL(ctx, url)
+	ttl := c.cacheSettings.cacheExpirationInterval
+	if res.Status != Ok {
+		ttl = c.cacheSettings.retryFailedAfter * time.Second
+	}
 	if res.Status != Dropped {
-		c.cache.Set(url, res, cache.DefaultExpiration)
+		//c.cache.Set(url, res, cache.DefaultExpiration)
+		c.ristrettoCache.SetWithTTL(url, res, 1, ttl)
 	}
 	return res
 }
