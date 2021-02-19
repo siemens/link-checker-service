@@ -25,7 +25,7 @@ cacheCleanupInterval = "48h"
 
 # use a github.com/dgraph-io/ristretto based cache that can limit the cache memory
 # this cache is expected to be slightly slower due to the size calculations
-cacheUseRistretto = true
+cacheUseRistretto = false
 cacheMaxSize = 1000_000_000 # approx. max cache size in bytes
 cacheNumCounters = 10_000_000 # number of 4-bit access counters. Set at approx 10x max unique expected URLs
 
