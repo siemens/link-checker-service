@@ -383,10 +383,9 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 
 	if lastRes != nil {
 		lastRes.CheckerTrace = checkerTrace
+		elapsed := time.Since(start)
+		lastRes.ElapsedMs = int64(elapsed / time.Millisecond)
 	}
-
-	elapsed := time.Since(start)
-	lastRes.ElapsedMs = int64(elapsed / time.Millisecond)
 
 	return lastRes
 }
