@@ -27,6 +27,9 @@ const (
 	maxConcurrentHTTPRequestsKey  = "maxConcurrentHTTPRequests"
 	cacheExpirationIntervalKey    = "cacheExpirationInterval"
 	cacheCleanupIntervalKey       = "cacheCleanupInterval"
+	cacheUseRistrettoKey          = "cacheUseRistretto"
+	cacheMaxSizeKey               = "cacheMaxSize"
+	cacheNumCountersKey           = "cacheNumCounters"
 	retryFailedAfterKey           = "retryFailedAfter"
 	maxURLsInRequestKey           = "maxURLsInRequest"
 	requestsPerSecondPerDomainKey = "requestsPerSecondPerDomain"
@@ -101,10 +104,19 @@ func init() {
 	// service
 	rootCmd.PersistentFlags().UintP(maxConcurrentHTTPRequestsKey, "c", 256, "maximum number of total concurrent HTTP requests")
 	_ = viper.BindPFlag(maxConcurrentHTTPRequestsKey, rootCmd.PersistentFlags().Lookup(maxConcurrentHTTPRequestsKey))
+
+	// cache
 	rootCmd.PersistentFlags().String(cacheExpirationIntervalKey, "24h", "Expire each URL check result after <interval> (in ns/us/ms/s/m/h)")
 	_ = viper.BindPFlag(cacheExpirationIntervalKey, rootCmd.PersistentFlags().Lookup(cacheExpirationIntervalKey))
 	rootCmd.PersistentFlags().String(cacheCleanupIntervalKey, "48h", "Interval between cache cleanups (in ns/us/ms/s/m/h)")
 	_ = viper.BindPFlag(cacheCleanupIntervalKey, rootCmd.PersistentFlags().Lookup(cacheCleanupIntervalKey))
+	rootCmd.PersistentFlags().Bool(cacheUseRistrettoKey, false, "Use a memory-bound cache (see the cacheMaxSize option)")
+	_ = viper.BindPFlag(cacheUseRistrettoKey, rootCmd.PersistentFlags().Lookup(cacheUseRistrettoKey))
+	rootCmd.PersistentFlags().Int64(cacheMaxSizeKey, 1000_000_000, "Approximage maximum cache size in bytes (when cacheUseRistretto enabled)")
+	_ = viper.BindPFlag(cacheMaxSizeKey, rootCmd.PersistentFlags().Lookup(cacheMaxSizeKey))
+	rootCmd.PersistentFlags().Int64(cacheNumCountersKey, 10_000_000, "Number of 4-bit access counters. Set at approx 10x max unique expected URLs (when cacheUseRistretto enabled)")
+	_ = viper.BindPFlag(cacheNumCountersKey, rootCmd.PersistentFlags().Lookup(cacheNumCountersKey))
+
 	rootCmd.PersistentFlags().String(retryFailedAfterKey, "30s", "If a URL check failed, e.g. intermittently, re-run it after <interval>  (in ns/us/ms/s/m/h)")
 	_ = viper.BindPFlag(retryFailedAfterKey, rootCmd.PersistentFlags().Lookup(retryFailedAfterKey))
 	rootCmd.PersistentFlags().UintP(maxURLsInRequestKey, "m", 0, "Maximum number URLs allowed per request")

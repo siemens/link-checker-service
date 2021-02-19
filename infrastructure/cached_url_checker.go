@@ -11,32 +11,37 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-
-	"github.com/patrickmn/go-cache"
 )
 
 const defaultCacheExpirationInterval = 24 * time.Hour
 const defaultCacheCleanupInterval = 48 * time.Hour
 const defaultRetryFailedAfter = 30 * time.Second
+const defaultCacheMaxSize int64 = 1e9
+const defaultCacheNumCounters int64 = 10_000_000
 
 // CachedURLChecker wraps a concurrency-limited URL checker
 type CachedURLChecker struct {
-	cache                   *cache.Cache
-	ccLimitedChecker        *CCLimitedURLChecker
+	cache                   resultCache
 	retryFailedAfterSeconds int64
+
+	ccLimitedChecker *CCLimitedURLChecker
 }
 
 type cacheSettings struct {
+	cacheUseRistretto       bool
 	cacheExpirationInterval time.Duration
 	cacheCleanupInterval    time.Duration
+	cacheMaxSize            int64
+	cacheNumCounters        int64
 	retryFailedAfter        time.Duration
 }
 
 // NewCachedURLChecker creates a new cached URL checker instance
 func NewCachedURLChecker() *CachedURLChecker {
 	settings := fetchCachedURLCheckerSettings()
+
 	checker := CachedURLChecker{
-		cache:                   cache.New(settings.cacheExpirationInterval, settings.cacheCleanupInterval),
+		cache:                   newCache(settings),
 		ccLimitedChecker:        NewCCLimitedURLChecker(),
 		retryFailedAfterSeconds: int64(settings.retryFailedAfter.Seconds()),
 	}
@@ -62,6 +67,27 @@ func fetchCachedURLCheckerSettings() cacheSettings {
 		s.cacheCleanupInterval = d
 	}
 
+	cacheUseRistretto := viper.GetBool("cacheUseRistretto")
+	log.Printf("cacheUseRistretto: %v", cacheUseRistretto)
+	s.cacheUseRistretto = cacheUseRistretto
+
+	cacheMaxSize := defaultCacheMaxSize
+	if cms := viper.GetInt64("cacheMaxSize"); cms > 0 {
+		cacheMaxSize = cms
+	}
+	s.cacheMaxSize = cacheMaxSize
+
+	cacheNumCounters := defaultCacheNumCounters
+	if cnc := viper.GetInt64("cacheNumCounters"); cnc > 0 {
+		cacheNumCounters = cnc
+	}
+	s.cacheNumCounters = cacheNumCounters
+
+	if cacheUseRistretto {
+		log.Printf("cacheMaxSize: %v", cacheMaxSize)
+		log.Printf("cacheNumCounters: %v", cacheNumCounters)
+	}
+
 	retryFailedAfter := viper.GetString("retryFailedAfter")
 	if d, err := time.ParseDuration(retryFailedAfter); err != nil {
 		log.Printf("Ignoring retryFailedAfter %v -> %v (%v)", cacheCleanupInterval, defaultRetryFailedAfter, err)
@@ -74,21 +100,17 @@ func fetchCachedURLCheckerSettings() cacheSettings {
 
 // CheckURL checks the desired URL
 func (c *CachedURLChecker) CheckURL(ctx context.Context, url string) *URLCheckResult {
-	value, found := c.cache.Get(url)
+	res, found := c.cache.Get(url)
 
-	if found {
-		res := value.(*URLCheckResult)
-
+	if found && c.shouldTakeCachedResult(res) {
 		// failures could have been temporary -> retry a URL after some time
-		if c.shouldTakeCachedResult(res) {
-			return res
-		}
+		return res
 	}
 
 	// otherwise, do the check & store
-	res := c.ccLimitedChecker.CheckURL(ctx, url)
+	res = c.ccLimitedChecker.CheckURL(ctx, url)
 	if res.Status != Dropped {
-		c.cache.Set(url, res, cache.DefaultExpiration)
+		c.cache.Set(url, res)
 	}
 	return res
 }

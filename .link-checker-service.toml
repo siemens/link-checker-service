@@ -19,7 +19,18 @@ corsOrigins = [
 maxConcurrentHTTPRequests = 200
 
 cacheExpirationInterval = "24h"
+
+# this option is valid only for the default cache
 cacheCleanupInterval = "48h"
+
+# use a github.com/dgraph-io/ristretto based cache that can limit the cache memory
+# this cache is expected to be slightly slower due to the size calculations
+cacheUseRistretto = true
+cacheMaxSize = 1000_000_000 # approx. max cache size in bytes
+cacheNumCounters = 10_000_000 # number of 4-bit access counters. Set at approx 10x max unique expected URLs
+
+# failures can happen for any reason
+# failing links will be retried in a subsequent check after that period
 retryFailedAfter = "2m"
 
 # rate-limit requests by IP. Empty string for no limits
