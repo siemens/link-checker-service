@@ -2,11 +2,11 @@
 
 Notable changes will be documented here
 
-## 0.0.22
+## 0.9.22
 
 - link-checker-service:
   - a new optional memory-limited cache based on [github.com/dgraph-io/ristretto](https://github.com/dgraph-io/ristretto)
-    - 
+    -
     - run the service with `--cacheUseRistretto`
     - see the options in [.link-checker-service.toml](.link-checker-service.toml)
 
@@ -17,7 +17,7 @@ Notable changes will be documented here
   - tracing the error message from each URL checker plugin
 - sample UI:
   - exporting the elapsed total time to CSV
-  - exporting the URL checker plugin trace as a JSON blob to CSV 
+  - exporting the URL checker plugin trace as a JSON blob to CSV
 
 ## 0.9.20
 
