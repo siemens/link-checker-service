@@ -119,6 +119,7 @@ func fireAndParseRequest(t *testing.T, router *gin.Engine, req *http.Request) se
 func setUpViperTestConfiguration() {
 	viper.SetEnvPrefix("LCS")
 	viper.Set("proxy", os.Getenv("LCS_PROXY"))
+	viper.Set("cacheUseRistretto", false)
 }
 
 func TestCORS(t *testing.T) {
@@ -348,6 +349,72 @@ func TestBadResultsAreRecheckedAfterGracePeriod(t *testing.T) {
 		response1.Urls[0].FetchedAtEpochSeconds,
 		"the result should have re-fetched, as retryFailedAfter=0s grace period is configured",
 	)
+}
+
+func TestRistrettoCache(t *testing.T) {
+	setUpViperTestConfiguration()
+	viper.Set("cacheCleanupInterval", "1m")
+	viper.Set("cacheUseRistretto", true)
+	viper.Set("cacheMaxSize", 10 /*bytes, unrealistic*/)
+	testServer := server.NewServer()
+	router := testServer.Detail()
+
+	response1, response2 := fireTwoConsecutiveOkRequests(t, router)
+
+	// assert
+	assert.Greater(
+		t,
+		response2.Urls[0].FetchedAtEpochSeconds,
+		response1.Urls[0].FetchedAtEpochSeconds,
+		"the result should not have been cached, as the max cost should have been exceeded",
+	)
+
+	// now, set the maximum size higher
+	viper.Set("cacheMaxSize", 10_000_000)
+	testServer = server.NewServer()
+	router = testServer.Detail()
+
+	response1, response2 = fireTwoConsecutiveOkRequests(t, router)
+
+	// assert
+	assert.Equal(
+		t,
+		response2.Urls[0].FetchedAtEpochSeconds,
+		response1.Urls[0].FetchedAtEpochSeconds,
+		"the result should have been cached, as the cache now has a sufficient maximum size",
+	)
+}
+
+func fireTwoConsecutiveOkRequests(t *testing.T, router *gin.Engine) (server.CheckURLsResponse, server.CheckURLsResponse) {
+	const alwaysOkRequest = `
+	{
+		"urls": [
+			{
+				"url":"https://google.com",
+				"context": "1"
+			}
+		]
+	}
+	`
+
+	// first request
+	w := requestCheck(alwaysOkRequest, router)
+	assert.Equal(t, http.StatusOK, w.Code)
+	response1 := unmarshalCheckURLsResponse(t, w)
+	assert.Len(t, response1.Urls, 1)
+	assert.Equal(t, response1.Urls[0].Status, "ok")
+
+	// sleep a bit
+	time.Sleep(1 * time.Second)
+
+	// second request
+	w = requestCheck(alwaysOkRequest, router)
+	assert.Equal(t, http.StatusOK, w.Code)
+	response2 := unmarshalCheckURLsResponse(t, w)
+	assert.Len(t, response2.Urls, 1)
+	assert.Equal(t, response2.Urls[0].Status, "ok")
+
+	return response1, response2
 }
 
 func fireTwoConsecutiveBadURLRequests(t *testing.T, router *gin.Engine) (server.CheckURLsResponse, server.CheckURLsResponse) {

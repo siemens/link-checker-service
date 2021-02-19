@@ -3,6 +3,7 @@ module github.com/siemens/link-checker-service
 go 1.15
 
 require (
+	github.com/alvaroloes/enumer v1.1.2 // indirect
 	github.com/appleboy/gin-jwt/v2 v2.6.4
 	github.com/darren/gpac v0.0.0-20200702020854-d9398608e64a
 	github.com/dgraph-io/ristretto v0.0.3
