@@ -6,7 +6,6 @@ Notable changes will be documented here
 
 - link-checker-service:
   - a new optional memory-limited cache based on [github.com/dgraph-io/ristretto](https://github.com/dgraph-io/ristretto)
-    -
     - run the service with `--cacheUseRistretto`
     - see the options in [.link-checker-service.toml](.link-checker-service.toml)
 
