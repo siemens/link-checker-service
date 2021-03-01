@@ -169,15 +169,15 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		log.Printf("Using config file: %v", viper.ConfigFileUsed())
-	} else {
-		log.Printf("Reading %v failed, continuing with defaults: ERROR %v", viper.ConfigFileUsed(), err)
-	}
+	_ = viper.ReadInConfig()
 }
 
 func echoConfig() {
 	log.Printf("Link Checker Service. Version: %v", infrastructure.BinaryVersion())
+
+	if viper.ConfigFileUsed() != "" {
+		log.Printf("Using config file: %v", viper.ConfigFileUsed())
+	}
 
 	proxyURL := viper.GetString(proxyKey)
 	if proxyURL != "" {
