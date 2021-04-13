@@ -9,7 +9,7 @@ import (
 	"log"
 	"time"
 
-	. "github.com/ahmetb/go-linq"
+	"github.com/ahmetb/go-linq"
 	"github.com/go-resty/resty/v2"
 	"mvdan.cc/xurls/v2"
 )
@@ -37,7 +37,7 @@ func main() {
 		response = checkURLs(links)
 	})
 
-	groups := From(response.Urls).
+	groups := linq.From(response.Urls).
 		Where(func(url interface{}) bool {
 			urlResponse := url.(URLStatusResponse)
 			return urlResponse.HTTPStatus >= 300 ||
@@ -49,13 +49,13 @@ func main() {
 			return url
 		}).
 		OrderBy(func(group interface{}) interface{} {
-			return group.(Group).Key
+			return group.(linq.Group).Key
 		}).
 		Results()
 
 	totalBroken := 0
 	for _, group := range groups {
-		g := group.(Group)
+		g := group.(linq.Group)
 		for _, lr := range g.Group {
 			totalBroken++
 			linkResult := lr.(URLStatusResponse)

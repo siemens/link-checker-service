@@ -68,7 +68,7 @@ type urlCheckerSettings struct {
 	SearchForBodyPatterns bool
 	BodyPatterns          []bodyPattern
 	EnableRequestTracing  bool
-	UrlCheckerPlugins     []string
+	URLCheckerPlugins     []string
 	PacScriptURL          string
 }
 
@@ -103,7 +103,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 	var checkers []URLCheckerPlugin
 
 	// for now, a valid checker may be configured twice, for whatever reason
-	for _, checkerName := range c.settings.UrlCheckerPlugins {
+	for _, checkerName := range c.settings.URLCheckerPlugins {
 		switch checkerName {
 		case "urlcheck":
 			// default client
@@ -271,7 +271,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 	if g != nil && !(len(g) == 1 && g[0] == "[]") && len(g) > 0 {
 		urlCheckerPlugins = viper.GetStringSlice(urlCheckerPluginsKey)
 	}
-	s.UrlCheckerPlugins = urlCheckerPlugins
+	s.URLCheckerPlugins = urlCheckerPlugins
 
 	return s
 }
@@ -342,6 +342,7 @@ func (l *localURLChecker) autoSelectClientFor(urlToCheck string) *resty.Client {
 	return buildClient(tmpSettings)
 }
 
+// URLCheckerPluginTrace is the internal struct to gather individual checker plugin stats
 type URLCheckerPluginTrace struct {
 	Name      string
 	Code      int

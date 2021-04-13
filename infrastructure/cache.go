@@ -52,9 +52,9 @@ func (c defaultCache) Get(url string) (*URLCheckResult, bool) {
 func newCache(settings cacheSettings) resultCache {
 	if settings.cacheUseRistretto {
 		return newRistrettoCache(settings)
-	} else {
-		return newDefaultCache(settings)
 	}
+
+	return newDefaultCache(settings)
 }
 
 func newRistrettoCache(settings cacheSettings) *ristrettoCache {

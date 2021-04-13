@@ -85,12 +85,12 @@ func TestDefaultURLCheckerClientPlugins(t *testing.T) {
 	// the default is a single URL client-based checker
 	setUpViperTestConfiguration()
 	c := NewURLCheckerClient()
-	assert.Equal(t, []string{"urlcheck"}, c.settings.UrlCheckerPlugins)
+	assert.Equal(t, []string{"urlcheck"}, c.settings.URLCheckerPlugins)
 
 	// setting multiple checkers is possible
 	viper.Set("urlCheckerPlugins", []string{"urlcheck", "_always_ok", "urlcheck"})
 	c = NewURLCheckerClient()
-	assert.Equal(t, []string{"urlcheck", "_always_ok", "urlcheck"}, c.settings.UrlCheckerPlugins)
+	assert.Equal(t, []string{"urlcheck", "_always_ok", "urlcheck"}, c.settings.URLCheckerPlugins)
 
 	// unsetting the proxy disables the ability to add the noproxy client
 	assert.Panics(t, func() {
@@ -104,7 +104,7 @@ func TestDefaultURLCheckerClientPlugins(t *testing.T) {
 		viper.Set("proxy", "http://proxy:1234")
 		viper.Set("urlCheckerPlugins", []string{"urlcheck", "urlcheck-noproxy"})
 		c = NewURLCheckerClient()
-		assert.Equal(t, []string{"urlcheck", "urlcheck-noproxy"}, c.settings.UrlCheckerPlugins)
+		assert.Equal(t, []string{"urlcheck", "urlcheck-noproxy"}, c.settings.URLCheckerPlugins)
 	})
 
 	// adding an unknown checker
