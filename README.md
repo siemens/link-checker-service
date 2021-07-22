@@ -247,7 +247,7 @@ Status code distribution:
 
 ## Dependencies
 
-- Go (1.15)
+- Go (1.16)
 - see [go.mod](go.mod)
 
 ## Alternatives

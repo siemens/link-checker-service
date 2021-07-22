@@ -9,11 +9,10 @@
 <title>Sample Link Checker Service Usage</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<script   src="https://code.jquery.com/jquery-3.6.0.min.js"   integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="   crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js" integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 <script>
 function statusOf(urlResult) {
     var suffix = '';
@@ -440,19 +439,19 @@ $(document).ready(function(){
             <textarea class="form-control" id="url-list-text" rows="5"></textarea>
 
             <div class="d-flex flex-row mt-2 mb-2">
-                <button type="button" class="p-2 btn btn-primary mr-4" id="check-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check</button>
-                <button type="button" class="p-2 btn btn-primary mr-4" id="check-async-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check (async)</button>
-                <button type="button" class="p-2 btn btn-secondary mr-4" id="abort-check-button" data-toggle="tooltip" data-placement="right" title="Abort the check" disabled="true">Abort</button>
-                <button type="button" class="p-2 btn btn-primary mr-4" id="download-csv-button" data-toggle="tooltip" data-placement="right" title="Download the results as CSV" disabled>Download CSV</button>
-                    <div class="p-2 form-check mr-4">
+                <button type="button" class="m-2 btn btn-primary mr-4" id="check-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check</button>
+                <button type="button" class="m-2 btn btn-primary mr-4" id="check-async-button" data-toggle="tooltip" data-placement="right" title="Run the check on the server">Check (async)</button>
+                <button type="button" class="m-2 btn btn-secondary mr-4" id="abort-check-button" data-toggle="tooltip" data-placement="right" title="Abort the check" disabled="true">Abort</button>
+                <button type="button" class="m-2 btn btn-primary mr-4" id="download-csv-button" data-toggle="tooltip" data-placement="right" title="Download the results as CSV" disabled>Download CSV</button>
+                    <div class="m-2 form-check mr-4">
                         <input type="checkbox" class="form-check-input" id="showSuccesses">
                         <label class="form-check-label" for="showSuccesses">Show successes</label>
                     </div>
-                    <div class="p-2 form-check mr-4">
+                    <div class="m-2 form-check mr-4">
                         <input type="checkbox" class="form-check-input" id="invertFilter">
                         <label class="form-check-label" for="invertFilter">Invert filter</label>
                     </div>
-                <div id="check-status" class="p-2"></div>
+                <div id="check-status" class="m-2"></div>
             </div>
 
             <div>
