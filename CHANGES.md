@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.23
+
+- upgraded the dependencies
+- link-checker-service
+  - default ristretto back to false
+  - do not echo config file location implicitly
+  - fixed golint warnings & go fmt
+
 ## 0.9.22
 
 - link-checker-service:
