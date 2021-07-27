@@ -7,7 +7,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"math"
@@ -75,7 +74,7 @@ func NewServerWithOptions(options *Options) Server {
 
 func precompileGlobs(globs []string) []glob.Glob {
 
-	if globs == nil || len(globs) == 0 {
+	if len(globs) == 0 {
 		return nil
 	}
 
@@ -113,6 +112,7 @@ func (s *Server) Detail() *gin.Engine {
 // Run starts the service instance (binds a port)
 // set the PORT environment variable for a different port to bind at
 func (s *Server) Run() {
+	log.Printf("Go version: %s\n", runtime.Version())
 	log.Printf("GOMAXPROCS: %v", runtime.GOMAXPROCS(-1))
 	var err error
 	if s.options.BindAddress != "" {
@@ -281,7 +281,7 @@ func (s *Server) setUpAsyncURLCheck(ctx context.Context, request CheckURLsReques
 
 	deadline := time.NewTimer(time.Second * time.Duration(int64(math.Max(float64(totalRequestDeadlineTimeoutSecondsPerURL*count), float64(totalRequestDeadlineTimeoutSeconds)))))
 	wg := sync.WaitGroup{}
-	resultChannel := make(chan URLStatusResponse, 0)
+	resultChannel := make(chan URLStatusResponse)
 	doneChannel := make(chan struct{})
 
 	// fire off all url requests in parallel
@@ -382,7 +382,7 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm,
 		HTTPStatusMessageFunc: func(e error, c *gin.Context) string {
 			log.Printf("Token validation error: %v", e)
-			return fmt.Sprintf("Token validation error: unauthorized")
+			return "Token validation error: unauthorized"
 		},
 	})
 
