@@ -7,13 +7,13 @@ require (
 	github.com/appleboy/gin-jwt/v2 v2.6.4
 	github.com/darren/gpac v0.0.0-20201209040425-3300e0622b93
 	github.com/dgraph-io/ristretto v0.0.3
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dop251/goja v0.0.0-20210406175830-1b11a6af686d // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-playground/validator/v10 v10.5.0 // indirect
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/gobwas/glob v0.2.3
+	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
