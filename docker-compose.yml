@@ -1,14 +1,14 @@
 version: "3.7"
 services:
   link-checker-service:
-    image: ghcr.io/siemens/link-checker-service:master
+    image: ghcr.io/siemens/link-checker-service
     build:
       context: ./
     ports:
       - "8080:8080"
 
   sample-ui:
-    image: ghcr.io/siemens/link-checker-service/sample-ui:master
+    image: ghcr.io/siemens/link-checker-service/sample-ui
     build:
       context: ./test/jquery_example/
     ports:

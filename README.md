@@ -30,9 +30,19 @@ link-checker-service serve
 
 - run the service dockerized, without installing Go, and navigate to the [sample UI](http://localhost:8092):
 
+building from scratch:
+
 ```bash
 docker-compose up --build
 ```
+
+or using a published image:
+
+```bash
+docker-compose up
+```
+
+replace the image tage in [docker-compose.yml](docker-compose.yml) if necessary
 
 - run from source:
 
