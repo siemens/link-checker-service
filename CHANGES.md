@@ -2,6 +2,12 @@
 
 Notable changes will be documented here
 
+## 0.9.24
+
+- publishing docker images
+- link-checker-service
+  - echoing the Go version
+
 ## 0.9.23
 
 - upgraded the dependencies
