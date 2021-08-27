@@ -4,6 +4,10 @@ Notable changes will be documented here
 
 ## 0.9.25
 
+- Go v1.17
+
+## 0.9.25
+
 - better docker image name
 
 ## 0.9.24
