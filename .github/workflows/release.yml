@@ -1,12 +1,10 @@
 # https://github.com/goreleaser/goreleaser-action
 name: Release
 
-# try the build first
-on: [push]
-# on:
-#     push:
-#         tags:
-#             - '*'
+on:
+    push:
+        tags:
+            - '*'
 
 jobs:
   release:
@@ -25,5 +23,13 @@ jobs:
       -
         name: Build & Package
         run: ./github_build.sh
+      -
+        uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: |
+            link-checker-service-lin.tgz
+            link-checker-service-osx.tgz
+            link-checker-service-win.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
