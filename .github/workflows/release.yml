@@ -1,13 +1,15 @@
 # https://github.com/goreleaser/goreleaser-action
 name: goreleaser
 
-on:
-    push:
-        tags:
-            - '*'
+# try the build first
+on: [push]
+# on:
+#     push:
+#         tags:
+#             - '*'
 
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
     steps:
       -
@@ -21,7 +23,7 @@ jobs:
         with:
           go-version: 1.17
       -
-        name: Run GoReleaser
+        name: Build & Package
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
