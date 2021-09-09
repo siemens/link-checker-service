@@ -2,9 +2,10 @@
 
 Notable changes will be documented here
 
-## 0.9.25
+## 0.9.26
 
 - Go v1.17
+- Build & Release via GitHub Actions
 
 ## 0.9.25
 

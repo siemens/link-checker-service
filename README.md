@@ -2,7 +2,7 @@
 
 The Link Checker web service runs cached and otherwise optimized broken link checks.
 
-[![Build Status](https://app.travis-ci.com/siemens/link-checker-service.svg?branch=master)](https://app.travis-ci.com/siemens/link-checker-service) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service) ![CodeQL](https://github.com/siemens/link-checker-service/workflows/CodeQL/badge.svg)
+[![Test](https://github.com/siemens/link-checker-service/actions/workflows/test.yml/badge.svg)](https://github.com/siemens/link-checker-service/actions/workflows/test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service) ![CodeQL](https://github.com/siemens/link-checker-service/workflows/CodeQL/badge.svg)
 
 Endpoints:
 

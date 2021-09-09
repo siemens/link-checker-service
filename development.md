@@ -73,11 +73,11 @@ Status code distribution:
 
 ## Releases
 
-- releases are automated via [.travis.yml](.travis.yml) deployment
+- releases are [automated](github_build.sh) via [.github/workflows/release.yml](.github/workflows/release.yml)) deployment
 - locally:
   - assuming a green CI `master` branch
   - update [CHANGES.md](CHANGES.md)
   - test (`go test ./...`)
   - `git tag v<version> -m 'v<version>'`
   - `git push origin v<version>`
-  - edit the release page upon artifact creation, e.g. `see [CHANGES](CHANGES.md)`
+  - make sure the release has a comment: `see [CHANGES](CHANGES.md)`
