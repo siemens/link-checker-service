@@ -9,15 +9,16 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/darren/gpac"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptrace"
-	"net/url"
+
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/darren/gpac"
 
 	"github.com/patrickmn/go-cache"
 
@@ -109,14 +110,12 @@ func NewURLCheckerClient() *URLCheckerClient {
 			// default client
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck", buildClient(urlCheckerSettings)))
 			log.Println("Added the defaut URL checker")
-			break
 		case "urlcheck-pac":
 			if c.settings.PacScriptURL == "" {
 				panic("Cannot instantiate a 'urlcheck-pac' checker without a proxy auto-config script configured")
 			}
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
 			log.Println("Added the PAC file based URL checker")
-			break
 		case "urlcheck-noproxy":
 			// if proxy is defined, add one without the proxy as fallback
 			if urlCheckerSettings.ProxyURL == "" {
@@ -127,7 +126,6 @@ func NewURLCheckerClient() *URLCheckerClient {
 			urlCheckerSettingsNoProxy.ProxyURL = ""
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-noproxy", buildClient(urlCheckerSettingsNoProxy)))
 			log.Println("Added the URL checker that doesn't use a proxy")
-			break
 		case "_ok_after_1s_on_delay.com":
 			// fake client for testing
 			checkers = addChecker(checkers, &fakeURLChecker{1 * time.Second, &URLCheckResult{
@@ -139,7 +137,6 @@ func NewURLCheckerClient() *URLCheckerClient {
 				RemoteAddr:            "",
 			}, "_ok_after_1s_on_delay.com"})
 			log.Println("Added the _always_ok checker")
-			break
 		case "_always_ok":
 			// fake client for testing
 			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
@@ -151,7 +148,6 @@ func NewURLCheckerClient() *URLCheckerClient {
 				RemoteAddr:            "",
 			}, "_always_ok"})
 			log.Println("Added the _always_ok checker")
-			break
 		case "_always_bad":
 			// fake client for testing
 			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
@@ -163,7 +159,6 @@ func NewURLCheckerClient() *URLCheckerClient {
 				RemoteAddr:            "",
 			}, "_always_bad"})
 			log.Println("Added the _always_bad checker")
-			break
 		default:
 			panic(fmt.Errorf("unknown checker: %v", checkerName))
 		}
@@ -392,7 +387,7 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 }
 
 func normalizeAddressOf(input string) string {
-	u, err := url.Parse(input)
+	u, err := netUrl.Parse(input)
 	if err != nil {
 		// bad urls will be handled later by the client
 		return "<bad url>"

@@ -97,7 +97,7 @@ func (r *CCLimitedURLChecker) checkURL(ctx context.Context, url string) *URLChec
 		}
 	}
 
-	resultChannel := make(chan *URLCheckResult, 0)
+	resultChannel := make(chan *URLCheckResult)
 	// allow for cancellation -> run in a goroutine
 	go func() {
 		// try making the request
