@@ -1,5 +1,5 @@
 # https://github.com/goreleaser/goreleaser-action
-name: goreleaser
+name: Release
 
 # try the build first
 on: [push]
@@ -24,9 +24,6 @@ jobs:
           go-version: 1.17
       -
         name: Build & Package
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: latest
-          args: release --rm-dist
+        run: ./github_build.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
