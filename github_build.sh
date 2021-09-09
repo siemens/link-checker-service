@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-export VERSION="${GITHUB_REF}-${GITHUB_SHA}"
+export VERSION="${GITHUB_REF##*/}-${GITHUB_SHA}"
 
 echo "VERSION: ${VERSION}"
 
