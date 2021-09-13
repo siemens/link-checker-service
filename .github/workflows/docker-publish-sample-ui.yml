@@ -61,3 +61,13 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+  
+  remove-package-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: purge packages
+        uses: dylanratcliffe/delete-untagged-containers@main
+        with:
+          package_name: ${{ env.IMAGE_NAME }}
+          # This is a person access token with
+          token: ${{ secrets.CR_PAT }}
