@@ -65,9 +65,9 @@ jobs:
   remove-package-versions:
     runs-on: ubuntu-latest
     steps:
-      - name: purge packages
-        uses: dylanratcliffe/delete-untagged-containers@main
+      - name: purge untagged packages
+        uses: jcansdale/delete-untagged-images@master
         with:
-          package_name: container/link-checker-service
-          # This is a person access token with
+          owner: orgs/siemens
+          package: link-checker-service
           token: ${{ secrets.GITHUB_TOKEN }}

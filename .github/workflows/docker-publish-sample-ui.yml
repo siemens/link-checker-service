@@ -61,13 +61,13 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  
+
   remove-package-versions:
     runs-on: ubuntu-latest
     steps:
-      - name: purge packages
-        uses: dylanratcliffe/delete-untagged-containers@main
+      - name: purge untagged packages
+        uses: jcansdale/delete-untagged-images@master
         with:
-          package_name: container/link-checker-service/link-checker-sample-ui
-          # This is a person access token with
+          owner: orgs/siemens
+          package: link-checker-service/link-checker-sample-ui
           token: ${{ secrets.GITHUB_TOKEN }}
