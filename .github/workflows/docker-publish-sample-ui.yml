@@ -70,4 +70,4 @@ jobs:
         with:
           package_name: ${{ env.IMAGE_NAME }}
           # This is a person access token with
-          token: ${{ secrets.CR_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
