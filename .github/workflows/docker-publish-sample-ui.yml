@@ -61,13 +61,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-  remove-package-versions:
-    runs-on: ubuntu-latest
-    steps:
-      - name: purge untagged packages
-        uses: jcansdale/delete-untagged-images@master
-        with:
-          owner: orgs/siemens
-          package: link-checker-service/link-checker-sample-ui
-          token: ${{ secrets.GITHUB_TOKEN }}
