@@ -7,7 +7,7 @@ name: Service Docker Build
 
 on:
   schedule:
-    - cron: '17 7 * * *'
+    - cron: '17 7 * * 0'
   push:
     branches: [ master ]
     # Publish semver tags as releases.
@@ -55,9 +55,9 @@ jobs:
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v2
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && github.event_name != 'schedule' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
