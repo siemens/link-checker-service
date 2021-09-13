@@ -68,6 +68,6 @@ jobs:
       - name: purge packages
         uses: dylanratcliffe/delete-untagged-containers@main
         with:
-          package_name: ${{ env.IMAGE_NAME }}
+          package_name: container/link-checker-service
           # This is a person access token with
           token: ${{ secrets.GITHUB_TOKEN }}
