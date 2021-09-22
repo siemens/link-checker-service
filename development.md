@@ -73,7 +73,7 @@ Status code distribution:
 
 ## Releases
 
-- releases are [automated](github_build.sh) via [.github/workflows/release.yml](.github/workflows/release.yml)) deployment
+- releases are [automated](github_build.sh) via [.github/workflows/release.yml](.github/workflows/release.yml) deployment
 - locally:
   - assuming a green CI `master` branch
   - update [CHANGES.md](CHANGES.md)
