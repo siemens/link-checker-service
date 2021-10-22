@@ -147,11 +147,14 @@ func (s *Server) setupRoutes() {
 
 	s.server.GET("/version", s.getVersion)
 
+	s.server.GET("/stats", s.getStats)
+
 	s.server.GET("/livez", s.getHealthStatus)
 	s.server.GET("/readyz", s.getHealthStatus)
 }
 
 func (s *Server) checkURLs(c *gin.Context) {
+	infrastructure.GlobalStats().OnIncomingRequest()
 	request, abort := s.parseURLCheckRequestOrAbort(c)
 	if abort {
 		return
@@ -198,6 +201,9 @@ func (s *Server) checkURLsInParallel(ctx context.Context, request CheckURLsReque
 }
 
 func (s *Server) checkURLsStream(c *gin.Context) {
+	infrastructure.GlobalStats().OnIncomingRequest()
+	infrastructure.GlobalStats().OnIncomingStreamRequest()
+
 	request, abort := s.parseURLCheckRequestOrAbort(c)
 	if abort {
 		return
@@ -424,4 +430,8 @@ func (s *Server) getHealthStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "UP",
 	})
+}
+
+func (s *Server) getStats(c *gin.Context) {
+	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetStats())
 }

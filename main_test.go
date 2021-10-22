@@ -7,6 +7,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/siemens/link-checker-service/infrastructure"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -321,12 +322,21 @@ func TestDuplicateURLs(t *testing.T) {
 }
 
 func TestBadResultsAreRecheckedAfterGracePeriod(t *testing.T) {
+	infrastructure.ResetGlobalStats()
+
 	setUpViperTestConfiguration()
 	viper.Set("retryFailedAfter", "30s")
 	testServer := server.NewServer()
 	router := testServer.Detail()
 
 	response1, response2 := fireTwoConsecutiveBadURLRequests(t, router)
+
+	assert.Equal(
+		t,
+		int64(1),
+		infrastructure.GlobalStats().GetStats().OutgoingRequests,
+		"there should have been only one call",
+	)
 
 	// assert
 	assert.Equal(

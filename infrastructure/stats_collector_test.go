@@ -6,12 +6,25 @@ import (
 	"testing"
 )
 
-func TestCollectingFromManyGoroutines(t *testing.T) {
+func TestCollectingFromSeveralGoroutines(t *testing.T) {
 	ResetGlobalStats()
 	const goroutines = 32
 	const requests = 100000
 	addStats(goroutines, requests)
-	assert.Equal(t, goroutines*requests, GlobalStats().GetStats().requests)
+	expectedCount := int64(goroutines * requests)
+	s := GlobalStats().GetStats()
+	assert.Equal(t, Stats{
+		IncomingRequests:       expectedCount,
+		OutgoingRequests:       expectedCount,
+		IncomingStreamRequests: expectedCount,
+		DnsResolutionsFailed:   expectedCount,
+		LinkChecksErrored:      expectedCount,
+		LinkChecksOk:           expectedCount,
+		LinkChecksBroken:       expectedCount,
+		LinkChecksDropped:      expectedCount,
+		LinkChecksSkipped:      expectedCount,
+	}, s)
+
 }
 
 func addStats(numGoroutines int, count int) {
@@ -21,7 +34,16 @@ func addStats(numGoroutines int, count int) {
 		wg.Add(1)
 		go func() {
 			for n := 0; n < count; n++ {
-				GlobalStats().OnRequest()
+				s := GlobalStats()
+				s.OnIncomingRequest()
+				s.OnOutgoingRequest()
+				s.OnIncomingStreamRequest()
+				s.OnLinkBroken()
+				s.OnLinkDropped()
+				s.OnDnsResolutionFailed()
+				s.OnLinkErrored()
+				s.OnLinkOk()
+				s.OnLinkSkipped()
 			}
 			defer wg.Done()
 		}()

@@ -9,6 +9,7 @@ Endpoints:
 - `/checkUrls` checks a batch at once
 - `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
 - `/version` returns the server version
+- `/stats` returns the link checker stats
 - `/livez`, `/readyz` health checks
 
 ## Quickstart Options
@@ -60,7 +61,7 @@ into the back-end might compromise the stability of the service through exhausti
 Thus, to minimize risk, a link checker should be isolated into a separate service. While there are several websites providing the functionality, these may not have access to hosts on a private network, and are otherwise not under your control.
 
 Checking whether a link is broken seems like a trivial task, but consider checking a thousand links a thousand times.
-Several optimizations and server, gateways, CDN or proxy implementation peculiarity work-arounds will need to be applied. This repository contains an implementation of such service.
+Several optimizations and server, gateways, CDN or proxy implementation peculiarity workarounds will need to be applied. This repository contains an implementation of such service.
 
 ## Usage
 

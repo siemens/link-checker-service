@@ -2,6 +2,11 @@
 
 Notable changes will be documented here
 
+## 0.9.27
+
+- link-checker-service
+  - a simple `/stats` endpoint
+
 ## 0.9.26
 
 - Go v1.17

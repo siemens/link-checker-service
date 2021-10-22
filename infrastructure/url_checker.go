@@ -315,9 +315,30 @@ func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastR
 		if client == nil {
 			panic("cannot instantiate a HTTP client. Please check the configuration")
 		}
-		return l.c.checkURL(ctx, urlToCheck, client)
+		GlobalStats().OnOutgoingRequest()
+		res, err := l.c.checkURL(ctx, urlToCheck, client)
+		onCheckResult(res)
+		return res, err
 	}
 	return lastResult, false
+}
+
+func onCheckResult(res *URLCheckResult) {
+	s := GlobalStats()
+	if res == nil {
+		s.OnLinkErrored()
+		return
+	}
+	switch res.Status {
+	case Ok:
+		s.OnLinkOk()
+	case Broken:
+		s.OnLinkBroken()
+	case Dropped:
+		s.OnLinkDropped()
+	case Skipped:
+		s.OnLinkSkipped()
+	}
 }
 
 func (l *localURLChecker) autoSelectClientFor(urlToCheck string) *resty.Client {
@@ -432,6 +453,7 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 			},
 			DNSDone: func(info httptrace.DNSDoneInfo) {
 				if remoteAddr == "" {
+					GlobalStats().OnDnsResolutionFailed()
 					// this may not be as precise as ConnectDone, thus skipping caching
 					remoteAddr = getDNSAddressesAsString(info.Addrs)
 				}
@@ -505,6 +527,7 @@ func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, add
 			remoteAddr = addr.String()
 			c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
 		} else {
+			GlobalStats().OnDnsResolutionFailed()
 			c.dnsCache.Set(addrToResolve, "DNS resolution failed", defaultRetryFailedAfter)
 			log.Printf("ERROR in resolveAndCacheTCPAddr: %v", err)
 		}
