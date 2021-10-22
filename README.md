@@ -4,7 +4,7 @@ The Link Checker web service runs cached and otherwise optimized broken link che
 
 [![Test](https://github.com/siemens/link-checker-service/actions/workflows/test.yml/badge.svg)](https://github.com/siemens/link-checker-service/actions/workflows/test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service) ![CodeQL](https://github.com/siemens/link-checker-service/workflows/CodeQL/badge.svg)
 
-Endpoints:
+Routes:
 
 - `/checkUrls` checks a batch at once
 - `/checkUrls/stream` returns results as they arrive using [JSON streaming](https://en.wikipedia.org/wiki/JSON_streaming)
@@ -131,7 +131,7 @@ Sample response:
 JSON Streaming can be used to optimize the client user experience, so that the client
 does not have to wait for the whole check result to complete to render.
 
-In the sample HTTPie request, post the streaming request to the `/checkUrls/stream` endpoint:
+In the sample HTTPie request, post the streaming request to the `/checkUrls/stream` route:
 
 ```bash
 http --stream  POST  localhost:8080/checkUrls/stream ...
@@ -234,6 +234,12 @@ e.g. when a proxy is needed for the HTTP client, see the sample [.link-checker-s
 and start the server with the argument: `--config .link-checker-service.toml`
 
 alternatively, set the client proxy via an environment variable: `LCS_PROXY=http://myproxy:8080`
+
+### Stats (POC)
+
+The checker stats can be obtained via the `/stats` route. The stats are simple counts of situations encountered.
+If multiple checkers are configured, e.g. one going through a proxy, and one not going through a proxy, the counts of the
+link checker events will contain both calls for now.
 
 ## Development
 
