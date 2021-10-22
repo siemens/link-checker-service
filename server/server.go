@@ -135,11 +135,13 @@ func (s *Server) setupRoutes() {
 	}
 
 	checkURLsRoutes := s.server.Group("/checkUrls")
+	statsRoutes := s.server.Group("/stats")
 
 	s.setUpRateLimiting(checkURLsRoutes)
 
 	if s.options.JWTValidationOptions != nil {
 		s.setUpJWTValidation(checkURLsRoutes)
+		s.setUpJWTValidation(statsRoutes)
 	}
 
 	checkURLsRoutes.POST("", s.checkURLs)
@@ -147,7 +149,7 @@ func (s *Server) setupRoutes() {
 
 	s.server.GET("/version", s.getVersion)
 
-	s.server.GET("/stats", s.getStats)
+	statsRoutes.GET("", s.getStats)
 
 	s.server.GET("/livez", s.getHealthStatus)
 	s.server.GET("/readyz", s.getHealthStatus)

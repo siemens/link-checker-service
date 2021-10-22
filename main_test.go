@@ -64,6 +64,7 @@ const secondRequest = `
 	`
 
 const endpoint = "/checkUrls"
+const statsEndpoint = "/stats"
 const streamingEndpoint = "/checkUrls/stream"
 
 func TestCommonCheckUrlsUsage(t *testing.T) {
@@ -553,6 +554,12 @@ func TestJWTAuthentication(t *testing.T) {
 	req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "the call without a bearer token should fail")
+
+	// /stats is authenticated
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", statsEndpoint, strings.NewReader(firstRequest))
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "the call to /stats without a bearer token should fail")
 
 	// correct token
 	token, _ := createJWTToken(priv)
