@@ -258,6 +258,29 @@ function updateServiceVersion() {
     });
 }
 
+function updateStats() {
+    var statResultsTableBody = $('#stats-results');
+    statResultsTableBody.empty();
+    $.ajax({
+        url: getLinkCheckerBaseURL()+"/stats",
+        success: function(data){
+            $.each(data, function(key, value) {
+                console.log(key, value);
+                statResultsTableBody.append('<tr>' +
+                    '<td class="min">' + key + '</td>\n' +
+                    '<td class="min">' + value + '</td>\n' +
+                    '</tr>');
+            });
+        },
+        timeout: 10000 /*ms*/
+    }).fail(function(err) {
+        statResultsTableBody.append('<tr>' +
+            '<td class="min">error</td>\n' +
+            '<td class="min">' + JSON.stringify(err) + '</td>\n' +
+            '</tr>');
+    });
+}
+
 function getLinkCheckerBaseURL() {
     var baseURL = $("#service-url-input").val();
 
@@ -334,12 +357,14 @@ $(document).ready(function(){
                 enableButtons();
                 window.results = result.urls;
                 updateServiceVersion();
+                updateStats();
             },
             "json"
         ).fail(function(err){
             updateProgress('Check status: '+err.statusText);
             updateServiceVersion();
             enableButtons();
+            updateStats();
         });
 
         window.lastCheckRequest = xhr;
@@ -407,6 +432,7 @@ $(document).ready(function(){
             filterResults();
             enableButtons();
             updateServiceVersion();
+            updateStats();
         }).fail(function(e){
             if (e.statusText.toLowerCase()==='ok') {
                 updateProgress('Check status: done '+urlCount+'/'+totalUrls);
@@ -418,6 +444,7 @@ $(document).ready(function(){
                 enableButtons();
             }
             updateServiceVersion();
+            updateStats();
         });
 
         window.lastCheckRequest = xhr;
@@ -428,6 +455,7 @@ $(document).ready(function(){
     $('#download-csv-button').click(downloadCSV);
 
     updateServiceVersion();
+    updateStats();
 });
 </script>
 </head>
@@ -472,6 +500,22 @@ $(document).ready(function(){
 
                 <div class="form-group" id="server-version" style="display: none;">
                     <p>Server version: <span id="server-version-string">unknown</span></p>
+                </div>
+
+                <h2>Stats</h2>
+
+                <div class="d-flex flex-row mt-2 mb-2">
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">key</th>
+                                <th scope="col">value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats-results">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
