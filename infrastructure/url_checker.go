@@ -335,9 +335,10 @@ func onCheckResult(res *URLCheckResult) {
 	case Broken:
 		s.OnLinkBroken()
 	case Dropped:
-		s.OnLinkDropped()
+		// handled in the drop handler
 	case Skipped:
-		s.OnLinkSkipped()
+		// handled in an upper layer
+		break
 	}
 }
 
@@ -430,6 +431,7 @@ func normalizeAddressOf(input string) string {
 func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, client *resty.Client) (*URLCheckResult, bool) {
 	select {
 	case <-ctx.Done():
+		GlobalStats().OnLinkDropped()
 		return &URLCheckResult{
 			Status:                Dropped,
 			Code:                  CustomHTTPErrorCode,

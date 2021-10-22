@@ -4,13 +4,10 @@ Notable changes will be documented here
 
 ## 0.9.28
 
-- sample UI:
-  - showing the `/stats` results
-
-## 0.9.27
-
 - link-checker-service
   - a simple `/stats` endpoint
+- sample UI:
+  - showing the `/stats` results
 
 ## 0.9.26
 
