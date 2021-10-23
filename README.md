@@ -138,7 +138,7 @@ http --stream  POST  localhost:8080/checkUrls/stream ...
 ```
 
 URL check result objects will be streamed continuously, delimited by a newline character `\n`, as they become available.
-These can then be rendered immediately. E.g. see the [sample UI](test/jquery_example/public/index.html).
+These can then be rendered immediately. E.g. see the [sample UI](test/jquery_example).
 
 ### Sample Front-Ends
 
