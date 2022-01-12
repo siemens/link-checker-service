@@ -354,7 +354,7 @@ func (l *localURLChecker) autoSelectClientFor(urlToCheck string) *resty.Client {
 			}
 		}
 	} else {
-		log.Printf("Could not find a proxy for %v", urlToCheck)
+		log.Printf("Could not find a proxy for %v", sanitizeUserLogInput(urlToCheck))
 	}
 	return buildClient(tmpSettings)
 }

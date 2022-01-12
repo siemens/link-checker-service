@@ -85,7 +85,7 @@ func (r *CCLimitedURLChecker) checkURL(ctx context.Context, url string) *URLChec
 	token, ok := r.guard.Acquire(ctx)
 	if !ok {
 		// short circuited - no need to try
-		log.Printf("guarded request short circuited for url '%v'\n", url)
+		log.Printf("guarded request short circuited for url '%v'\n", sanitizeUserLogInput(url))
 		if token != nil {
 			token.OnDropped()
 		}
