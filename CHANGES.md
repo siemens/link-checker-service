@@ -2,6 +2,11 @@
 
 Notable changes will be documented here
 
+## 0.9.29
+
+- link-checker-service
+  - sanitizing log lines that include API user input
+
 ## 0.9.28
 
 - link-checker-service
