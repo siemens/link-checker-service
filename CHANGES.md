@@ -2,6 +2,11 @@
 
 Notable changes will be documented here
 
+## 0.9.30
+
+- link-checker-service
+  - counting cache hits and misses
+
 ## 0.9.29
 
 - link-checker-service

@@ -18,6 +18,8 @@ type Stats struct {
 	LinkChecksBroken       int64
 	LinkChecksDropped      int64
 	LinkChecksSkipped      int64
+	CacheHits              int64
+	CacheMisses            int64
 }
 
 type statsState struct {
@@ -97,6 +99,20 @@ func (stats *statsState) OnLinkDropped() {
 func (stats *statsState) OnLinkSkipped() {
 	stats.Lock()
 	stats.s.LinkChecksSkipped++
+	stats.Unlock()
+}
+
+// OnCacheHit called when the result is taken from the cache
+func (stats *statsState) OnCacheHit() {
+	stats.Lock()
+	stats.s.CacheHits++
+	stats.Unlock()
+}
+
+// OnCacheMiss called when the requested URL wasn't found in the cache
+func (stats *statsState) OnCacheMiss() {
+	stats.Lock()
+	stats.s.CacheMisses++
 	stats.Unlock()
 }
 

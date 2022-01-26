@@ -103,9 +103,11 @@ func (c *CachedURLChecker) CheckURL(ctx context.Context, url string) *URLCheckRe
 	res, found := c.cache.Get(url)
 
 	if found && c.shouldTakeCachedResult(res) {
+		GlobalStats().OnCacheHit()
 		// failures could have been temporary -> retry a URL after some time
 		return res
 	}
+	GlobalStats().OnCacheMiss()
 
 	// otherwise, do the check & store
 	res = c.ccLimitedChecker.CheckURL(ctx, url)

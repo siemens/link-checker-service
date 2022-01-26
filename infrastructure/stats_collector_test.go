@@ -28,6 +28,8 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 		LinkChecksBroken:       expectedCount,
 		LinkChecksDropped:      expectedCount,
 		LinkChecksSkipped:      expectedCount,
+		CacheHits:              expectedCount,
+		CacheMisses:            expectedCount,
 	}, s)
 
 }
@@ -49,6 +51,8 @@ func addStats(numGoroutines int, count int) {
 				s.OnLinkErrored()
 				s.OnLinkOk()
 				s.OnLinkSkipped()
+				s.OnCacheHit()
+				s.OnCacheMiss()
 			}
 			defer wg.Done()
 		}()
