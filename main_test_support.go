@@ -11,12 +11,13 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"github.com/golang-jwt/jwt"
 	"log"
 	"math/big"
 	"net/http/httptest"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt"
 )
 
 // adapted the testing technique from
@@ -50,7 +51,7 @@ func createTestCertificates() (string, string, interface{}) {
 	const cert = "cert.pem"
 	var err error
 	var priv interface{}
-	priv, err = rsa.GenerateKey(rand.Reader, 2048)
+	priv, _ = rsa.GenerateKey(rand.Reader, 2048)
 
 	serial := new(big.Int)
 	serial.SetInt64(1)
