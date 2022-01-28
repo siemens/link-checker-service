@@ -1,13 +1,13 @@
-// Copyright 2020-2021 Siemens AG
+// Copyright 2020-2022 Siemens AG
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // SPDX-License-Identifier: MPL-2.0
+
 package main
 
 import (
 	"encoding/json"
-	"github.com/siemens/link-checker-service/infrastructure"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +16,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/siemens/link-checker-service/infrastructure"
 
 	"github.com/gin-gonic/gin"
 

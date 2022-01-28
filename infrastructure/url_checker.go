@@ -1,8 +1,9 @@
-// Copyright 2020-2021 Siemens AG
+// Copyright 2020-2022 Siemens AG
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // SPDX-License-Identifier: MPL-2.0
+
 package infrastructure
 
 import (
@@ -455,7 +456,7 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 			},
 			DNSDone: func(info httptrace.DNSDoneInfo) {
 				if remoteAddr == "" {
-					GlobalStats().OnDnsResolutionFailed()
+					GlobalStats().OnDNSResolutionFailed()
 					// this may not be as precise as ConnectDone, thus skipping caching
 					remoteAddr = getDNSAddressesAsString(info.Addrs)
 				}
@@ -529,7 +530,7 @@ func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, add
 			remoteAddr = addr.String()
 			c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
 		} else {
-			GlobalStats().OnDnsResolutionFailed()
+			GlobalStats().OnDNSResolutionFailed()
 			c.dnsCache.Set(addrToResolve, "DNS resolution failed", defaultRetryFailedAfter)
 			log.Printf("ERROR in resolveAndCacheTCPAddr: %v", err)
 		}

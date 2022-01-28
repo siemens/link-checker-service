@@ -1,14 +1,16 @@
-// Copyright 2020-2021 Siemens AG
+// Copyright 2020-2022 Siemens AG
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // SPDX-License-Identifier: MPL-2.0
+
 package infrastructure
 
 import (
-	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCollectingFromSeveralGoroutines(t *testing.T) {
@@ -22,7 +24,7 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 		IncomingRequests:       expectedCount,
 		OutgoingRequests:       expectedCount,
 		IncomingStreamRequests: expectedCount,
-		DnsResolutionsFailed:   expectedCount,
+		DNSResolutionsFailed:   expectedCount,
 		LinkChecksErrored:      expectedCount,
 		LinkChecksOk:           expectedCount,
 		LinkChecksBroken:       expectedCount,
@@ -47,7 +49,7 @@ func addStats(numGoroutines int, count int) {
 				s.OnIncomingStreamRequest()
 				s.OnLinkBroken()
 				s.OnLinkDropped()
-				s.OnDnsResolutionFailed()
+				s.OnDNSResolutionFailed()
 				s.OnLinkErrored()
 				s.OnLinkOk()
 				s.OnLinkSkipped()
