@@ -97,7 +97,14 @@ func configureGin(options *Options) *gin.Engine {
 		log.Println("Disabling request logging")
 		return e
 	}
-	return gin.Default()
+	g := gin.Default()
+	g.Use(func(context *gin.Context) {
+		x := context.GetHeader("X-Forwarded-For")
+		if x != "" {
+			log.Printf("X-Forwarded-For: %v", x)
+		}
+	})
+	return g
 }
 
 // NewServer creates a new server instance
