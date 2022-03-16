@@ -43,7 +43,7 @@ or using a published image:
 docker-compose up
 ```
 
-replace the image tage in [docker-compose.yml](docker-compose.yml) if necessary
+replace the image tag in [docker-compose.yml](docker-compose.yml) if necessary
 
 - run from source:
 
