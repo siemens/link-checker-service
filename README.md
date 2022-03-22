@@ -34,7 +34,7 @@ link-checker-service serve
 building from scratch:
 
 ```bash
-docker-compose up --build
+docker-compose up --build --force-recreate
 ```
 
 or using a published image:

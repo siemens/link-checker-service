@@ -2,6 +2,10 @@
 
 Notable changes will be documented here
 
+## 0.9.31
+
+- Go v1.18
+
 ## 0.9.30
 
 - link-checker-service
