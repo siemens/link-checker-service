@@ -15,6 +15,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/glog v1.0.0 // indirect
+	github.com/google/uuid v1.1.2
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible

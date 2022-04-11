@@ -115,6 +115,7 @@ func (s *Server) Detail() *gin.Engine {
 func (s *Server) Run() {
 	log.Printf("Go version: %s\n", runtime.Version())
 	log.Printf("GOMAXPROCS: %v", runtime.GOMAXPROCS(-1))
+	log.Printf("Instance ID: %v", infrastructure.GetInstanceId())
 	var err error
 	if s.options.BindAddress != "" {
 		// custom bind address, e.g. 0.0.0.0:4444
@@ -437,10 +438,14 @@ func (s *Server) getHealthStatus(c *gin.Context) {
 	})
 }
 
+const instanceIdHeader = "X-INSTANCE-ID"
+
 func (s *Server) getStats(c *gin.Context) {
+	c.Header(instanceIdHeader, infrastructure.GetInstanceId())
 	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetStats())
 }
 
 func (s *Server) getDomainStats(c *gin.Context) {
+	c.Header(instanceIdHeader, infrastructure.GetInstanceId())
 	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetDomainStats())
 }
