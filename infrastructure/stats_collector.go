@@ -107,9 +107,10 @@ func (stats *StatsState) OnLinkBroken(domain string, status string) {
 }
 
 // OnLinkDropped called on link check dropped
-func (stats *StatsState) OnLinkDropped() {
+func (stats *StatsState) OnLinkDropped(domain string) {
 	stats.Lock()
 	stats.s.LinkChecksDropped++
+	stats.incrementOrDefaultStatus(domain, "dropped")
 	stats.Unlock()
 }
 

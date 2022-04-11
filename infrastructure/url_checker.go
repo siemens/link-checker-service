@@ -432,7 +432,8 @@ func normalizeAddressOf(input string) string {
 func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, client *resty.Client) (*URLCheckResult, bool) {
 	select {
 	case <-ctx.Done():
-		GlobalStats().OnLinkDropped()
+		domain := domainOf(urlToCheck)
+		GlobalStats().OnLinkDropped(domain)
 		return &URLCheckResult{
 			Status:                Dropped,
 			Code:                  CustomHTTPErrorCode,
