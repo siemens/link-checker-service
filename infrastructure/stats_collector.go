@@ -28,6 +28,7 @@ type Stats struct {
 type DomainStats struct {
 	BrokenBecause map[string]int64
 	Ok            int64
+	Errored       int64
 }
 
 // StatsState is the protected instance of the Stats object
@@ -78,9 +79,10 @@ func (stats *StatsState) OnDNSResolutionFailed(domain string) {
 }
 
 // OnLinkErrored called on link check error
-func (stats *StatsState) OnLinkErrored() {
+func (stats *StatsState) OnLinkErrored(domain string) {
 	stats.Lock()
 	stats.s.LinkChecksErrored++
+	stats.incrementOrDefaultErrored(domain)
 	stats.Unlock()
 }
 
@@ -148,6 +150,15 @@ func (stats *StatsState) incrementOrDefaultOk(domain string) {
 	}
 	ds := stats.s.DomainStats[domain]
 	ds.Ok++
+	stats.s.DomainStats[domain] = ds
+}
+
+func (stats *StatsState) incrementOrDefaultErrored(domain string) {
+	if _, ok := stats.s.DomainStats[domain]; !ok {
+		stats.s.DomainStats[domain] = defaultDomainStats()
+	}
+	ds := stats.s.DomainStats[domain]
+	ds.Errored++
 	stats.s.DomainStats[domain] = ds
 }
 

@@ -327,7 +327,7 @@ func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastR
 func onCheckResult(domain string, res *URLCheckResult) {
 	s := GlobalStats()
 	if res == nil {
-		s.OnLinkErrored()
+		s.OnLinkErrored(domain)
 		return
 	}
 	switch res.Status {

@@ -283,7 +283,6 @@
                 url: getLinkCheckerBaseURL() + "/stats",
                 success: function (data) {
                     $.each(data, function (key, value) {
-                        console.log(key, value);
                         statResultsTableBody.append('<tr>' +
                             '<td class="min">' + key + '</td>\n' +
                             '<td class="min">' + ((key !== 'DomainStats') ? value : formatDomainStats(value)) + '</td>\n' +
@@ -304,10 +303,11 @@
             $.map(stats, function (value, key) {
                 console.log(value, key)
                 body += '<strong>' + key + '</strong>';
-                body += '<p>Ok:' + value.Ok;
+                body += '<p>Ok: ' + value.Ok;
                 $.each(value.BrokenBecause, function (status, count) {
                     body+=' | ' + status + ': ' + count;
                 })
+                body += ' | Errored: ' + value.Errored;
                 body+='</p>';
                 return body;
             })

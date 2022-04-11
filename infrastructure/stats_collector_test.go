@@ -56,6 +56,10 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 				},
 				Ok: 0,
 			},
+			"errored.com": {
+				BrokenBecause: map[string]int64{},
+				Errored:       expectedCount,
+			},
 		},
 	}, s)
 
@@ -107,7 +111,7 @@ func addStats(numGoroutines int, count int) {
 				s.OnLinkBroken("notfound.com", "404")
 				s.OnLinkDropped("dropped.com")
 				s.OnDNSResolutionFailed("bad-domain.com")
-				s.OnLinkErrored()
+				s.OnLinkErrored("errored.com")
 				s.OnLinkOk("example.com")
 				s.OnLinkSkipped()
 				s.OnCacheHit()
