@@ -334,7 +334,7 @@ func onCheckResult(domain string, res *URLCheckResult) {
 	case Ok:
 		s.OnLinkOk(domain)
 	case Broken:
-		s.OnLinkBroken()
+		s.OnLinkBroken(domain, fmt.Sprintf("%v", res.Code))
 	case Dropped:
 		// handled in the drop handler
 	case Skipped:

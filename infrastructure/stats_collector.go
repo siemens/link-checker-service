@@ -91,15 +91,6 @@ func (stats *StatsState) OnLinkOk(domain string) {
 	stats.Unlock()
 }
 
-func (stats *StatsState) incrementOrDefaultOk(domain string) {
-	if _, ok := stats.s.DomainStats[domain]; !ok {
-		stats.s.DomainStats[domain] = defaultDomainStats()
-	}
-	ds := stats.s.DomainStats[domain]
-	ds.Ok++
-	stats.s.DomainStats[domain] = ds
-}
-
 func defaultDomainStats() DomainStats {
 	return DomainStats{
 		BrokenBecause: map[string]int64{},
@@ -107,9 +98,10 @@ func defaultDomainStats() DomainStats {
 }
 
 // OnLinkBroken called on link check broken
-func (stats *StatsState) OnLinkBroken() {
+func (stats *StatsState) OnLinkBroken(domain string, status string) {
 	stats.Lock()
 	stats.s.LinkChecksBroken++
+	stats.incrementOrDefaultStatus(domain, status)
 	stats.Unlock()
 }
 
@@ -146,6 +138,36 @@ func (stats *StatsState) GetStats() Stats {
 	stats.RLock()
 	defer stats.RUnlock()
 	return stats.s // a copy
+}
+
+func (stats *StatsState) incrementOrDefaultOk(domain string) {
+	if _, ok := stats.s.DomainStats[domain]; !ok {
+		stats.s.DomainStats[domain] = defaultDomainStats()
+	}
+	ds := stats.s.DomainStats[domain]
+	ds.Ok++
+	stats.s.DomainStats[domain] = ds
+}
+
+func (stats *StatsState) incrementOrDefaultStatus(domain string, status string) {
+	if _, ok := stats.s.DomainStats[domain]; !ok {
+		stats.s.DomainStats[domain] = defaultDomainStats()
+	}
+	ds := stats.s.DomainStats[domain]
+	ds.BrokenBecause = incrementOrDefaultBrokenBecause(ds.BrokenBecause, status)
+	stats.s.DomainStats[domain] = ds
+}
+
+func incrementOrDefaultBrokenBecause(because map[string]int64, status string) map[string]int64 {
+	count := int64(0)
+
+	if c, ok := because[status]; ok {
+		count = c
+	}
+
+	because[status] = count + 1
+
+	return because
 }
 
 func newStatsState() *StatsState {
