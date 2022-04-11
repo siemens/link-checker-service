@@ -101,6 +101,8 @@ func TestCommonCheckUrlsUsage(t *testing.T) {
 	newResponse := responseContaining("bing", response)
 	assert.Equal(t, "1", newResponse.Context)
 	assert.Greater(t, newResponse.FetchedAtEpochSeconds, okResponse1.FetchedAtEpochSeconds, "the new url should have been checked later than the cached one")
+
+	assert.Greater(t, infrastructure.GlobalStats().GetStats().DomainStats["google.com"].Ok, int64(0))
 }
 
 func responseContaining(urlSubstring string, response server.CheckURLsResponse) server.URLStatusResponse {

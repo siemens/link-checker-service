@@ -318,13 +318,13 @@ func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastR
 		}
 		GlobalStats().OnOutgoingRequest()
 		res, err := l.c.checkURL(ctx, urlToCheck, client)
-		onCheckResult(res)
+		onCheckResult(domainOf(urlToCheck), res)
 		return res, err
 	}
 	return lastResult, false
 }
 
-func onCheckResult(res *URLCheckResult) {
+func onCheckResult(domain string, res *URLCheckResult) {
 	s := GlobalStats()
 	if res == nil {
 		s.OnLinkErrored()
@@ -332,7 +332,7 @@ func onCheckResult(res *URLCheckResult) {
 	}
 	switch res.Status {
 	case Ok:
-		s.OnLinkOk()
+		s.OnLinkOk(domain)
 	case Broken:
 		s.OnLinkBroken()
 	case Dropped:

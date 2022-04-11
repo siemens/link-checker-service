@@ -8,7 +8,6 @@ package infrastructure
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"testing"
 
@@ -34,6 +33,12 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 		LinkChecksSkipped:      expectedCount,
 		CacheHits:              expectedCount,
 		CacheMisses:            expectedCount,
+		DomainStats: map[string]DomainStats{
+			"example.com": {
+				BrokenBecause: map[string]int64{}, // not nil!
+				Ok:            expectedCount,
+			},
+		},
 	}, s)
 
 }
@@ -42,17 +47,19 @@ func TestSerialization(t *testing.T) {
 	stats := Stats{
 		IncomingRequests: 42,
 		DomainStats: map[string]DomainStats{
-			"example.com": {map[string]int64{
-				"200":     33,
-				"dropped": 22,
-			}},
+			"example.com": {
+				BrokenBecause: map[string]int64{
+					"200":     33,
+					"dropped": 22,
+				},
+				Ok: 11,
+			},
 		},
 	}
 
 	// serialize
 	bytes, err := json.Marshal(&stats)
 	assert.NoError(t, err)
-	fmt.Println(string(bytes))
 
 	// deserialize
 	deserialized := Stats{}
@@ -63,8 +70,9 @@ func TestSerialization(t *testing.T) {
 	assert.Equal(t, deserialized.IncomingRequests, int64(42))
 	assert.Equal(t, deserialized.LinkChecksOk, int64(0))
 
-	assert.Equal(t, deserialized.DomainStats["example.com"].Status["200"], int64(33))
-	assert.Equal(t, deserialized.DomainStats["example.com"].Status["dropped"], int64(22))
+	assert.Equal(t, deserialized.DomainStats["example.com"].BrokenBecause["200"], int64(33))
+	assert.Equal(t, deserialized.DomainStats["example.com"].BrokenBecause["dropped"], int64(22))
+	assert.Equal(t, deserialized.DomainStats["example.com"].Ok, int64(11))
 }
 
 func addStats(numGoroutines int, count int) {
@@ -82,7 +90,7 @@ func addStats(numGoroutines int, count int) {
 				s.OnLinkDropped()
 				s.OnDNSResolutionFailed()
 				s.OnLinkErrored()
-				s.OnLinkOk()
+				s.OnLinkOk("example.com")
 				s.OnLinkSkipped()
 				s.OnCacheHit()
 				s.OnCacheMiss()
