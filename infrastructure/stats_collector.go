@@ -70,9 +70,10 @@ func (stats *StatsState) OnOutgoingRequest() {
 }
 
 // OnDNSResolutionFailed called on dns resolution failure
-func (stats *StatsState) OnDNSResolutionFailed() {
+func (stats *StatsState) OnDNSResolutionFailed(domain string) {
 	stats.Lock()
 	stats.s.DNSResolutionsFailed++
+	stats.incrementOrDefaultStatus(domain, "dns_resolution_failed")
 	stats.Unlock()
 }
 

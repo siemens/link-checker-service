@@ -446,6 +446,8 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 	addrToResolve := normalizeAddressOf(urlToCheck)
 	remoteAddr := c.cachedRemoteAddr(addrToResolve)
 
+	domain := domainOf(urlToCheck)
+
 	if c.settings.EnableRequestTracing &&
 		remoteAddr == "" /*enable tracing only if remoteAddr hasn't been resolved yet */ {
 
@@ -456,7 +458,7 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 			},
 			DNSDone: func(info httptrace.DNSDoneInfo) {
 				if remoteAddr == "" {
-					GlobalStats().OnDNSResolutionFailed()
+					GlobalStats().OnDNSResolutionFailed(domain)
 					// this may not be as precise as ConnectDone, thus skipping caching
 					remoteAddr = getDNSAddressesAsString(info.Addrs)
 				}
@@ -524,13 +526,14 @@ func (c *URLCheckerClient) tryHeadRequestDefault(ctx context.Context, urlToCheck
 
 func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, addrToResolve string) string {
 	remoteAddr := ""
+	domain := domainOf(addrToResolve)
 	if err == nil {
 		if addr, err := net.ResolveTCPAddr(network, addrToResolve); err == nil {
 			// this may be called multiple times: last invocation wins
 			remoteAddr = addr.String()
 			c.dnsCache.Set(addrToResolve, remoteAddr, defaultCacheExpirationInterval)
 		} else {
-			GlobalStats().OnDNSResolutionFailed()
+			GlobalStats().OnDNSResolutionFailed(domain)
 			c.dnsCache.Set(addrToResolve, "DNS resolution failed", defaultRetryFailedAfter)
 			log.Printf("ERROR in resolveAndCacheTCPAddr: %v", err)
 		}
