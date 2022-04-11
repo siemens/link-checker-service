@@ -21,7 +21,11 @@ type Stats struct {
 	LinkChecksSkipped      int64
 	CacheHits              int64
 	CacheMisses            int64
-	DomainStats            map[string]DomainStats
+}
+
+// DomainStatsResponse for all domains
+type DomainStatsResponse struct {
+	DomainStats map[string]DomainStats
 }
 
 // DomainStats for one domain
@@ -34,6 +38,7 @@ type DomainStats struct {
 type StatsState struct {
 	sync.RWMutex
 	s Stats
+	d map[string]DomainStats
 }
 
 var globalStatsState = newStatsState()
@@ -144,22 +149,29 @@ func (stats *StatsState) GetStats() Stats {
 	return stats.s // a copy
 }
 
+// GetDomainStats returns a copy of the detailed domain stats
+func (stats *StatsState) GetDomainStats() DomainStatsResponse {
+	stats.RLock()
+	defer stats.RUnlock()
+	return DomainStatsResponse{stats.d} // a copy
+}
+
 func (stats *StatsState) incrementOrDefaultOk(domain string) {
-	if _, ok := stats.s.DomainStats[domain]; !ok {
-		stats.s.DomainStats[domain] = defaultDomainStats()
+	if _, ok := stats.d[domain]; !ok {
+		stats.d[domain] = defaultDomainStats()
 	}
-	ds := stats.s.DomainStats[domain]
+	ds := stats.d[domain]
 	ds.Ok++
-	stats.s.DomainStats[domain] = ds
+	stats.d[domain] = ds
 }
 
 func (stats *StatsState) incrementOrDefaultStatus(domain string, status string) {
-	if _, ok := stats.s.DomainStats[domain]; !ok {
-		stats.s.DomainStats[domain] = defaultDomainStats()
+	if _, ok := stats.d[domain]; !ok {
+		stats.d[domain] = defaultDomainStats()
 	}
-	ds := stats.s.DomainStats[domain]
+	ds := stats.d[domain]
 	ds.BrokenBecause = incrementOrDefaultBrokenBecause(ds.BrokenBecause, status)
-	stats.s.DomainStats[domain] = ds
+	stats.d[domain] = ds
 }
 
 func incrementOrDefaultBrokenBecause(because map[string]int64, status string) map[string]int64 {
@@ -176,8 +188,7 @@ func incrementOrDefaultBrokenBecause(because map[string]int64, status string) ma
 
 func newStatsState() *StatsState {
 	return &StatsState{
-		s: Stats{
-			DomainStats: map[string]DomainStats{},
-		},
+		s: Stats{},
+		d: map[string]DomainStats{},
 	}
 }

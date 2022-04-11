@@ -151,6 +151,7 @@ func (s *Server) setupRoutes() {
 	s.server.GET("/version", s.getVersion)
 
 	statsRoutes.GET("", s.getStats)
+	statsRoutes.GET("/domains", s.getDomainStats)
 
 	s.server.GET("/livez", s.getHealthStatus)
 	s.server.GET("/readyz", s.getHealthStatus)
@@ -438,4 +439,8 @@ func (s *Server) getHealthStatus(c *gin.Context) {
 
 func (s *Server) getStats(c *gin.Context) {
 	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetStats())
+}
+
+func (s *Server) getDomainStats(c *gin.Context) {
+	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetDomainStats())
 }

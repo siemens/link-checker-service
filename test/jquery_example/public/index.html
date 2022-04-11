@@ -277,39 +277,62 @@
         }
 
         function updateStats() {
+            updateServiceStats();
+            updateDomainStats();
+        }
+
+        function updateServiceStats() {
             var statResultsTableBody = $('#stats-results');
             statResultsTableBody.empty();
             $.ajax({
                 url: getLinkCheckerBaseURL() + "/stats",
                 success: function (data) {
                     $.each(data, function (key, value) {
-                        statResultsTableBody.append('<tr>' +
-                            '<td class="min">' + key + '</td>\n' +
-                            '<td class="min">' + ((key !== 'DomainStats') ? value : formatDomainStats(value)) + '</td>\n' +
-                            '</tr>');
+                        appendTableValue(statResultsTableBody, key, value);
                     });
                 },
                 timeout: 10000 /*ms*/
             }).fail(function (err) {
-                statResultsTableBody.append('<tr>' +
-                    '<td class="min">error</td>\n' +
-                    '<td class="min">' + JSON.stringify(err) + '</td>\n' +
-                    '</tr>');
+                appendErrorToTable(statResultsTableBody, err);
             });
         }
 
+        function updateDomainStats() {
+            var statResultsTableBody = $('#domain-stats-results');
+            statResultsTableBody.empty();
+            $.ajax({
+                url: getLinkCheckerBaseURL() + "/stats/domains",
+                success: function (data) {
+                    $.each(data.DomainStats, function (key, value) {
+                        appendTableValue(statResultsTableBody, key, formatDomainStats(value));
+                    });
+                },
+                timeout: 10000 /*ms*/
+            }).fail(function (err) {
+                appendErrorToTable(statResultsTableBody, err);
+            });
+        }
+
+        function appendTableValue(statResultsTableBody, key, value) {
+            statResultsTableBody.append('<tr>' +
+                '<td class="min">' + key + '</td>\n' +
+                '<td class="min">' + value + '</td>\n' +
+                '</tr>');
+        }
+
+        function appendErrorToTable(statResultsTableBody, err) {
+            statResultsTableBody.append('<tr>' +
+                '<td class="min">error</td>\n' +
+                '<td class="min">' + JSON.stringify(err) + '</td>\n' +
+                '</tr>');
+        }
+
         function formatDomainStats(stats) {
-            var body = "";
-            $.map(stats, function (value, key) {
-                console.log(value, key)
-                body += '<strong>' + key + '</strong>';
-                body += '<p>Ok: ' + value.Ok;
-                $.each(value.BrokenBecause, function (status, count) {
-                    body+=' | ' + status + ': ' + count;
-                })
-                body+='</p>';
-                return body;
+            body = '<p>Ok: ' + stats.Ok;
+            $.each(stats.BrokenBecause, function (status, count) {
+                body+=' | ' + status + ': ' + count;
             })
+            body+='</p>';
             return body;
         }
 
@@ -553,6 +576,22 @@
                     </tr>
                     </thead>
                     <tbody id="stats-results">
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>Domain Stats</h2>
+
+            <div class="d-flex flex-row mt-2 mb-2">
+
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">domain</th>
+                        <th scope="col">stats</th>
+                    </tr>
+                    </thead>
+                    <tbody id="domain-stats-results">
                     </tbody>
                 </table>
             </div>

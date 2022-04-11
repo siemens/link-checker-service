@@ -21,6 +21,7 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 	addStats(goroutines, requests)
 	expectedCount := int64(goroutines * requests)
 	s := GlobalStats().GetStats()
+	d := GlobalStats().GetDomainStats()
 	assert.Equal(t, Stats{
 		IncomingRequests:       expectedCount,
 		OutgoingRequests:       expectedCount,
@@ -33,44 +34,43 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 		LinkChecksSkipped:      expectedCount,
 		CacheHits:              expectedCount,
 		CacheMisses:            expectedCount,
-		DomainStats: map[string]DomainStats{
-			"example.com": {
-				BrokenBecause: map[string]int64{}, // not nil!
-				Ok:            expectedCount,
-			},
-			"notfound.com": {
-				BrokenBecause: map[string]int64{
-					"404": expectedCount,
-				},
-			},
-			"bad-domain.com": {
-				BrokenBecause: map[string]int64{
-					"dns_resolution_failed": expectedCount,
-				},
-			},
-			"dropped.com": {
-				BrokenBecause: map[string]int64{
-					"dropped": expectedCount,
-				},
-			},
-			"errored.com": {
-				BrokenBecause: map[string]int64{
-					"errored": expectedCount,
-				},
-			},
-			"skipped.com": {
-				BrokenBecause: map[string]int64{
-					"skipped": expectedCount,
-				},
-			},
-		},
 	}, s)
 
+	assert.Equal(t, map[string]DomainStats{
+		"example.com": {
+			BrokenBecause: map[string]int64{}, // not nil!
+			Ok:            expectedCount,
+		},
+		"notfound.com": {
+			BrokenBecause: map[string]int64{
+				"404": expectedCount,
+			},
+		},
+		"bad-domain.com": {
+			BrokenBecause: map[string]int64{
+				"dns_resolution_failed": expectedCount,
+			},
+		},
+		"dropped.com": {
+			BrokenBecause: map[string]int64{
+				"dropped": expectedCount,
+			},
+		},
+		"errored.com": {
+			BrokenBecause: map[string]int64{
+				"errored": expectedCount,
+			},
+		},
+		"skipped.com": {
+			BrokenBecause: map[string]int64{
+				"skipped": expectedCount,
+			},
+		},
+	}, d.DomainStats)
 }
 
-func TestSerialization(t *testing.T) {
-	stats := Stats{
-		IncomingRequests: 42,
+func TestDomainsStatsSerialization(t *testing.T) {
+	stats := DomainStatsResponse{
 		DomainStats: map[string]DomainStats{
 			"example.com": {
 				BrokenBecause: map[string]int64{
@@ -87,14 +87,11 @@ func TestSerialization(t *testing.T) {
 	assert.NoError(t, err)
 
 	// deserialize
-	deserialized := Stats{}
+	deserialized := DomainStatsResponse{}
 	err = json.Unmarshal(bytes, &deserialized)
 	assert.NoError(t, err)
 
 	// check round-trip
-	assert.Equal(t, deserialized.IncomingRequests, int64(42))
-	assert.Equal(t, deserialized.LinkChecksOk, int64(0))
-
 	assert.Equal(t, deserialized.DomainStats["example.com"].BrokenBecause["200"], int64(33))
 	assert.Equal(t, deserialized.DomainStats["example.com"].BrokenBecause["dropped"], int64(22))
 	assert.Equal(t, deserialized.DomainStats["example.com"].Ok, int64(11))
