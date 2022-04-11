@@ -241,6 +241,10 @@ The checker stats can be obtained via the `/stats` route. The stats are simple c
 If multiple checkers are configured, e.g. one going through a proxy, and one not going through a proxy, the counts of the
 link checker events will contain both calls for now.
 
+Detailed domain stats are tracked upon completion or termination of the outgoing requests only, meaning that
+a returned cached result won't add a result. The next time the result will be tracked for the cached failed
+entry is determined via the `retryFailedAfter` setting, and the ok one via `cacheExpirationInterval`.
+
 ## Development
 
 see [development.md](development.md)

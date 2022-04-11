@@ -7,6 +7,8 @@ Notable changes will be documented here
 - Go v1.18
 - link-checker-service
   - tracking domain stats as blacklist input
+- sample UI:
+  - showing detailed domain stats
 
 ## 0.9.30
 
