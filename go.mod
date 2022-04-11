@@ -26,7 +26,6 @@ require (
 	github.com/ugorji/go v1.2.7 // indirect
 	github.com/ulule/limiter/v3 v3.10.0
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sys v0.0.0-20220315194320-039c03cc5b86 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 	gopkg.in/ini.v1 v1.66.4 // indirect

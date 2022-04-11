@@ -5,6 +5,8 @@ Notable changes will be documented here
 ## 0.9.31
 
 - Go v1.18
+- link-checker-service
+  - tracking domain stats as blacklist input
 
 ## 0.9.30
 

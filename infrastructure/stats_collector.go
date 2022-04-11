@@ -21,6 +21,12 @@ type Stats struct {
 	LinkChecksSkipped      int64
 	CacheHits              int64
 	CacheMisses            int64
+	DomainStats            map[string]DomainStats
+}
+
+// DomainStats for one domain
+type DomainStats struct {
+	Status map[string]int64
 }
 
 // StatsState is the protected instance of the Stats object

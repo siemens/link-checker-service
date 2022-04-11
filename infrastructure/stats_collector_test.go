@@ -7,6 +7,8 @@
 package infrastructure
 
 import (
+	"encoding/json"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -34,6 +36,35 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 		CacheMisses:            expectedCount,
 	}, s)
 
+}
+
+func TestSerialization(t *testing.T) {
+	stats := Stats{
+		IncomingRequests: 42,
+		DomainStats: map[string]DomainStats{
+			"example.com": {map[string]int64{
+				"200":     33,
+				"dropped": 22,
+			}},
+		},
+	}
+
+	// serialize
+	bytes, err := json.Marshal(&stats)
+	assert.NoError(t, err)
+	fmt.Println(string(bytes))
+
+	// deserialize
+	deserialized := Stats{}
+	err = json.Unmarshal(bytes, &deserialized)
+	assert.NoError(t, err)
+
+	// check round-trip
+	assert.Equal(t, deserialized.IncomingRequests, int64(42))
+	assert.Equal(t, deserialized.LinkChecksOk, int64(0))
+
+	assert.Equal(t, deserialized.DomainStats["example.com"].Status["200"], int64(33))
+	assert.Equal(t, deserialized.DomainStats["example.com"].Status["dropped"], int64(22))
 }
 
 func addStats(numGoroutines int, count int) {
