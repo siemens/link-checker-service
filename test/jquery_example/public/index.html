@@ -300,7 +300,18 @@
         }
 
         function formatDomainStats(stats) {
-            return JSON.stringify(stats);
+            var body = "";
+            $.map(stats, function (value, key) {
+                console.log(value, key)
+                body += '<strong>' + key + '</strong>';
+                body += '<p>Ok:' + value.Ok;
+                $.each(value.BrokenBecause, function (status, count) {
+                    body+=' | ' + status + ': ' + count;
+                })
+                body+='</p>';
+                return body;
+            })
+            return body;
         }
 
         function getLinkCheckerBaseURL() {
