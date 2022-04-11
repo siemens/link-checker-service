@@ -307,7 +307,6 @@
                 $.each(value.BrokenBecause, function (status, count) {
                     body+=' | ' + status + ': ' + count;
                 })
-                body += ' | Errored: ' + value.Errored;
                 body+='</p>';
                 return body;
             })

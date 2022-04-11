@@ -44,7 +44,7 @@ func (c *DomainRateLimitedChecker) CheckURL(ctx context.Context, url string) *UR
 	}
 
 	// limit per domain
-	key := domainOf(url)
+	key := DomainOf(url)
 	var limiter *rate.Limiter
 	if limiterInstance, ok := c.domains.Load(key); !ok {
 		limiter = rate.NewLimiter(c.ratePerSecond /*per second*/, 1 /*burst*/)
@@ -66,7 +66,8 @@ func (c *DomainRateLimitedChecker) CheckURL(ctx context.Context, url string) *UR
 	return c.checker.CheckURL(ctx, url)
 }
 
-func domainOf(input string) string {
+// DomainOf returns either the domain name or a placeholder in case of a parse error
+func DomainOf(input string) string {
 	u, err := url.Parse(input)
 	if err != nil {
 		// bad urls will be handled later by the client

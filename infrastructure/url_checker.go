@@ -318,7 +318,7 @@ func (l *localURLChecker) CheckURL(ctx context.Context, urlToCheck string, lastR
 		}
 		GlobalStats().OnOutgoingRequest()
 		res, err := l.c.checkURL(ctx, urlToCheck, client)
-		onCheckResult(domainOf(urlToCheck), res)
+		onCheckResult(DomainOf(urlToCheck), res)
 		return res, err
 	}
 	return lastResult, false
@@ -432,7 +432,7 @@ func normalizeAddressOf(input string) string {
 func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, client *resty.Client) (*URLCheckResult, bool) {
 	select {
 	case <-ctx.Done():
-		domain := domainOf(urlToCheck)
+		domain := DomainOf(urlToCheck)
 		GlobalStats().OnLinkDropped(domain)
 		return &URLCheckResult{
 			Status:                Dropped,
@@ -447,7 +447,7 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 	addrToResolve := normalizeAddressOf(urlToCheck)
 	remoteAddr := c.cachedRemoteAddr(addrToResolve)
 
-	domain := domainOf(urlToCheck)
+	domain := DomainOf(urlToCheck)
 
 	if c.settings.EnableRequestTracing &&
 		remoteAddr == "" /*enable tracing only if remoteAddr hasn't been resolved yet */ {
@@ -527,7 +527,7 @@ func (c *URLCheckerClient) tryHeadRequestDefault(ctx context.Context, urlToCheck
 
 func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, addrToResolve string) string {
 	remoteAddr := ""
-	domain := domainOf(addrToResolve)
+	domain := DomainOf(addrToResolve)
 	if err == nil {
 		if addr, err := net.ResolveTCPAddr(network, addrToResolve); err == nil {
 			// this may be called multiple times: last invocation wins

@@ -351,7 +351,7 @@ func translateCheckerTrace(trace []infrastructure.URLCheckerPluginTrace) []URLCh
 }
 
 func urlBlacklisted(url URLRequest) URLStatusResponse {
-	infrastructure.GlobalStats().OnLinkSkipped()
+	infrastructure.GlobalStats().OnLinkSkipped(infrastructure.DomainOf(url.URL))
 	return URLStatusResponse{
 		URLRequest:            url,
 		HTTPStatus:            infrastructure.CustomHTTPErrorCode,

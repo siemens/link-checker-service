@@ -42,23 +42,26 @@ func TestCollectingFromSeveralGoroutines(t *testing.T) {
 				BrokenBecause: map[string]int64{
 					"404": expectedCount,
 				},
-				Ok: 0,
 			},
 			"bad-domain.com": {
 				BrokenBecause: map[string]int64{
 					"dns_resolution_failed": expectedCount,
 				},
-				Ok: 0,
 			},
 			"dropped.com": {
 				BrokenBecause: map[string]int64{
 					"dropped": expectedCount,
 				},
-				Ok: 0,
 			},
 			"errored.com": {
-				BrokenBecause: map[string]int64{},
-				Errored:       expectedCount,
+				BrokenBecause: map[string]int64{
+					"errored": expectedCount,
+				},
+			},
+			"skipped.com": {
+				BrokenBecause: map[string]int64{
+					"skipped": expectedCount,
+				},
 			},
 		},
 	}, s)
@@ -113,7 +116,7 @@ func addStats(numGoroutines int, count int) {
 				s.OnDNSResolutionFailed("bad-domain.com")
 				s.OnLinkErrored("errored.com")
 				s.OnLinkOk("example.com")
-				s.OnLinkSkipped()
+				s.OnLinkSkipped("skipped.com")
 				s.OnCacheHit()
 				s.OnCacheMiss()
 			}
