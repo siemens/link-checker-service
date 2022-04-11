@@ -7,15 +7,24 @@
 package infrastructure
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 )
 
 var instanceId string = ""
+var runningSince int64 = 0
 
 func GetInstanceId() string {
 	return instanceId
 }
 
+func GetRunningSince() string {
+	return fmt.Sprintf("%v", runningSince)
+}
+
 func init() {
 	instanceId = uuid.New().String()
+	runningSince = time.Now().Unix()
 }

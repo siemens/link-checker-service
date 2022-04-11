@@ -439,13 +439,16 @@ func (s *Server) getHealthStatus(c *gin.Context) {
 }
 
 const instanceIdHeader = "X-INSTANCE-ID"
+const runningSinceHeader = "X-RUNNING-SINCE"
 
 func (s *Server) getStats(c *gin.Context) {
 	c.Header(instanceIdHeader, infrastructure.GetInstanceId())
+	c.Header(runningSinceHeader, infrastructure.GetRunningSince())
 	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetStats())
 }
 
 func (s *Server) getDomainStats(c *gin.Context) {
 	c.Header(instanceIdHeader, infrastructure.GetInstanceId())
+	c.Header(runningSinceHeader, infrastructure.GetRunningSince())
 	c.JSON(http.StatusOK, infrastructure.GlobalStats().GetDomainStats())
 }
