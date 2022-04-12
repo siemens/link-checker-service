@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
 	"sync"
 	"time"
 
@@ -64,14 +63,4 @@ func (c *DomainRateLimitedChecker) CheckURL(ctx context.Context, url string) *UR
 		}
 	}
 	return c.checker.CheckURL(ctx, url)
-}
-
-// DomainOf returns either the domain name or a placeholder in case of a parse error
-func DomainOf(input string) string {
-	u, err := url.Parse(input)
-	if err != nil {
-		// bad urls will be handled later by the client
-		return "<bad url>"
-	}
-	return u.Host
 }
