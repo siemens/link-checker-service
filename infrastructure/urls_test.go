@@ -22,4 +22,6 @@ func TestDomainOf(t *testing.T) {
 		"urls are expected to be prefixed at an earlier processing stage",
 	)
 	assert.Equal(t, "example.com", DomainOf("https://example.com:42/placeholder/"))
+	assert.Equal(t, "localhost", DomainOf("ftp://localhost/123"))
+	assert.Equal(t, "127.0.0.1", DomainOf("https://127.0.0.1:8080/123"))
 }
