@@ -7,8 +7,9 @@
 package infrastructure
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDomainOf(t *testing.T) {
@@ -24,4 +25,5 @@ func TestDomainOf(t *testing.T) {
 	assert.Equal(t, "example.com", DomainOf("https://example.com:42/placeholder/"))
 	assert.Equal(t, "localhost", DomainOf("ftp://localhost/123"))
 	assert.Equal(t, "127.0.0.1", DomainOf("https://127.0.0.1:8080/123"))
+	assert.Equal(t, "::1", DomainOf("https://[::1]:8080/123"))
 }
