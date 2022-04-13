@@ -12,7 +12,6 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"net/url"
 	"runtime"
 	"strings"
 	"sync"
@@ -365,12 +364,10 @@ func urlBlacklisted(url URLRequest) URLStatusResponse {
 }
 
 func (s *Server) isBlacklisted(input URLRequest) bool {
-	u, err := url.Parse(input.URL)
-	if err != nil {
-		return false
-	}
+	// use the domain without the port
+	domain := infrastructure.DomainOf(input.URL)
 	for _, g := range s.domainBlacklistGlobs {
-		if g.Match(u.Host) {
+		if g.Match(domain) {
 			return true
 		}
 	}
