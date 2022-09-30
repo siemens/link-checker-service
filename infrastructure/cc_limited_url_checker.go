@@ -25,7 +25,8 @@ const defaultMaxConcurrentRequests = 256
 
 // CustomHTTPErrorCode is a custom error code to be able to recognize it externally
 // see also: https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
-//           https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+//
+//	https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 const CustomHTTPErrorCode = 528
 
 // CCLimitedURLChecker is a concurrency-limited wrapper around a URLCheckerClient
