@@ -77,6 +77,7 @@ Status code distribution:
 - locally:
   - assuming a green CI `master` branch
   - update [CHANGES.md](CHANGES.md)
+  - `go fmt ./...`
   - test (`go test ./...`)
   - `git tag v<version> -m 'v<version>'`
   - `git push origin v<version>`
