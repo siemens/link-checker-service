@@ -270,7 +270,7 @@ Status code distribution:
 
 ## Dependencies
 
-- Go (1.16)
+- Go (1.19)
 - see [go.mod](go.mod)
 
 ## Alternatives

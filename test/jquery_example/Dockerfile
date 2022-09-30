@@ -1,5 +1,5 @@
 # build
-FROM golang:1.18 AS builder
+FROM golang:1.19 AS builder
 WORKDIR /sample-ui/
 # cache dependencies
 COPY go.mod go.sum ./

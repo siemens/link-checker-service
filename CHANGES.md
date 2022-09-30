@@ -4,7 +4,7 @@ Notable changes will be documented here
 
 ## 0.9.31
 
-- Go v1.18
+- Go v1.19
 - link-checker-service
   - tracking domain stats as blacklist input
   - domains of URLs are parsed and used in the domain blacklist without the port
