@@ -8,4 +8,4 @@ require (
 	mvdan.cc/xurls/v2 v2.5.0
 )
 
-require golang.org/x/net v0.11.0 // indirect
+require golang.org/x/net v0.14.0 // indirect
