@@ -1,5 +1,5 @@
 # build
-FROM golang:1.20 AS builder
+FROM golang:1.21 AS builder
 WORKDIR /link-checker-service/
 # cache dependencies
 COPY go.mod go.sum ./
@@ -19,6 +19,7 @@ RUN addgroup -S lcsgroup && adduser -S lcsuser -G lcsgroup
 # run
 FROM scratch
 EXPOSE 8080
+WORKDIR /
 
 # copy tls certificates
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

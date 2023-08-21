@@ -2,6 +2,10 @@
 
 Notable changes will be documented here
 
+## 0.9.33
+
+- Go v1.21
+
 ## 0.9.32
 
 - Go v1.20
