@@ -4,7 +4,10 @@ Notable changes will be documented here
 
 ## 0.9.35
 
-- token validation via JWKS
+- link-checker-service
+  - token validation via JWKS
+- sample UI
+  - upgraded JS dependencies
 
 ## 0.9.34
 
