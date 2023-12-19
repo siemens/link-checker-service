@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Siemens AG
+// Copyright 2020-2023 Siemens AG
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,8 +8,6 @@ package server
 
 import (
 	"context"
-	"github.com/gin-contrib/cors"
-	"github.com/gobwas/glob"
 	"io"
 	"log"
 	"math"
@@ -18,6 +16,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gobwas/glob"
 
 	"github.com/MicahParks/keyfunc"
 	ginGwt "github.com/appleboy/gin-jwt/v2"

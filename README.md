@@ -294,7 +294,7 @@ some URL check services exist, albeit not open source (as of 02.09.2020)
 ## License
 
 ```text
-    Copyright 2020-2022 Siemens AG and contributors as noted in the AUTHORS file.
+    Copyright 2020-2023 Siemens AG and contributors as noted in the AUTHORS file.
 
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
