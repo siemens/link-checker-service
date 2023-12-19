@@ -63,6 +63,9 @@ privKeyFile = "./dummy.priv.cer"
 pubKeyFile = "./public.cer"
 signingAlgorithm = "RS384"
 
+# alternatively, via JWKS
+# jwksUrl = "http://my-auth-provider/jwks"
+
 # searchForBodyPatterns allows searching for patterns in response bodies
 # enabling searchForBodyPatterns will impact checker performance
 # this feature is only configurable via the config file

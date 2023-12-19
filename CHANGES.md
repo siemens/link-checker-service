@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.35
+
+- token validation via JWKS
+
+## 0.9.34
+
+- upgraded dependencies
+
 ## 0.9.33
 
 - Go v1.21

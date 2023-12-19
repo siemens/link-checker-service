@@ -25,6 +25,7 @@ const useJWTValidationKey = "useJWTValidation"
 const privKeyFileKey = "privKeyFile"
 const pubKeyFileKey = "pubKeyFile"
 const signingAlgorithmKey = "signingAlgorithm"
+const jwksUrlKey = "jwksUrl"
 const disableRequestLoggingKey = "disableRequestLogging"
 
 var serveCmd = &cobra.Command{
@@ -73,6 +74,7 @@ func fetchConfig() {
 
 func fetchJWTValidationConfig() {
 	jwtValidationOptions = &s.JWTValidationOptions{
+		JwksUrl:          viper.GetString(jwksUrlKey),
 		PrivKeyFile:      viper.GetString(privKeyFileKey),
 		PubKeyFile:       viper.GetString(pubKeyFileKey),
 		SigningAlgorithm: viper.GetString(signingAlgorithmKey),
@@ -103,6 +105,10 @@ func init() {
 	flags.String(signingAlgorithmKey, "RS384",
 		"Provide a valid public key to validate the JWT tokens against")
 	_ = viper.BindPFlag(signingAlgorithmKey, flags.Lookup(signingAlgorithmKey))
+
+	flags.String(jwksUrlKey, "",
+		"Provide a JWKS Url for automatic JWT validation automation")
+	_ = viper.BindPFlag(jwksUrlKey, flags.Lookup(jwksUrlKey))
 
 	flags.StringVar(&IPRateLimit, "IPRateLimit", "", "rate-limit requests from an IP. e.g. 5-S (5 per second), 1000-H (1000 per hour)")
 

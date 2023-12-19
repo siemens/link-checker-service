@@ -8,6 +8,8 @@ package server
 
 import (
 	"context"
+	"github.com/gin-contrib/cors"
+	"github.com/gobwas/glob"
 	"io"
 	"log"
 	"math"
@@ -17,13 +19,12 @@ import (
 	"sync"
 	"time"
 
-	jwt "github.com/appleboy/gin-jwt/v2"
-	"github.com/gobwas/glob"
+	"github.com/MicahParks/keyfunc"
+	ginGwt "github.com/appleboy/gin-jwt/v2"
+	jwtv4 "github.com/golang-jwt/jwt/v4"
 	"github.com/ulule/limiter/v3"
 	gm "github.com/ulule/limiter/v3/drivers/middleware/gin"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
-
-	"github.com/gin-contrib/cors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/siemens/link-checker-service/infrastructure"
@@ -39,6 +40,7 @@ type JWTValidationOptions struct {
 	PrivKeyFile      string
 	PubKeyFile       string
 	SigningAlgorithm string
+	JwksUrl          string
 }
 
 // Options configures the web service instance
@@ -141,8 +143,7 @@ func (s *Server) setupRoutes() {
 	s.setUpRateLimiting(checkURLsRoutes)
 
 	if s.options.JWTValidationOptions != nil {
-		s.setUpJWTValidation(checkURLsRoutes)
-		s.setUpJWTValidation(statsRoutes)
+		s.setUpJWTValidation(checkURLsRoutes, statsRoutes)
 	}
 
 	checkURLsRoutes.POST("", s.checkURLs)
@@ -374,7 +375,7 @@ func (s *Server) isBlacklisted(input URLRequest) bool {
 	return false
 }
 
-func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
+func (s *Server) setUpJWTValidation(routerGroups ...*gin.RouterGroup) {
 	if s.options.JWTValidationOptions == nil {
 		log.Fatal("JWT Validation not set up correctly")
 	}
@@ -385,7 +386,8 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 	log.Printf("  SigningAlgorithm: %v", s.options.JWTValidationOptions.SigningAlgorithm)
 
 	// the jwt middleware
-	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
+	middleware, err := ginGwt.New(&ginGwt.GinJWTMiddleware{
+		KeyFunc:          tryGetJwksKeyFunc(s.options.JWTValidationOptions.JwksUrl),
 		PrivKeyFile:      s.options.JWTValidationOptions.PrivKeyFile,
 		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,
 		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm,
@@ -399,7 +401,21 @@ func (s *Server) setUpJWTValidation(routerGroup *gin.RouterGroup) {
 		log.Fatal("JWT Error:" + err.Error())
 	}
 
-	routerGroup.Use(middleware.MiddlewareFunc())
+	for _, routerGroup := range routerGroups {
+		routerGroup.Use(middleware.MiddlewareFunc())
+	}
+}
+
+func tryGetJwksKeyFunc(jwksURL string) func(token *jwtv4.Token) (interface{}, error) {
+	kf, err := keyfunc.Get(jwksURL, keyfunc.Options{
+		// to do: configurable
+		RefreshInterval: 1 * time.Hour,
+	})
+	if err != nil {
+		return nil
+	}
+	log.Printf("JWKS configured with the url: %s", jwksURL)
+	return kf.Keyfunc
 }
 
 func (s *Server) setUpRateLimiting(routerGroup *gin.RouterGroup) {
