@@ -9,7 +9,7 @@ require (
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-resty/resty/v2 v2.10.0
+	github.com/go-resty/resty/v2 v2.11.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.5.0
@@ -41,7 +41,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/glog v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20231212022811-ec68065c825e // indirect
+	github.com/google/pprof v0.0.0-20231229205709-960ae82b1e42 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -64,13 +64,13 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/arch v0.6.0 // indirect
+	golang.org/x/arch v0.7.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
+	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
