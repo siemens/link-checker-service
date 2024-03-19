@@ -2,6 +2,11 @@
 
 Notable changes will be documented here
 
+## 0.9.36
+
+- upgraded dependencies
+- Go v1.22
+
 ## 0.9.35
 
 - upgraded dependencies
