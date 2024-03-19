@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/ahmetb/go-linq v3.0.0+incompatible
-	github.com/go-resty/resty/v2 v2.11.0
+	github.com/go-resty/resty/v2 v2.12.0
 	mvdan.cc/xurls/v2 v2.5.0
 )
 
-require golang.org/x/net v0.21.0 // indirect
+require golang.org/x/net v0.22.0 // indirect
