@@ -546,9 +546,14 @@
                         chunkAttempts++;
                         do {
                             // split individual JSON objects
-                            var nextMessage = response.substring(messageStart);
-                            indexOfBreak = nextMessage.indexOf('\n');
-                            if (indexOfBreak > 0) {
+                            var nextMessage = "";
+                            var indexOfBreak = -1;
+                            while(true) {
+                                nextMessage = response.substring(messageStart);
+                                indexOfBreak = nextMessage.indexOf('\n');
+                                if (indexOfBreak === -1) {
+                                    break;
+                                }
                                 urlSubstring = nextMessage.substring(0, indexOfBreak);
                                 messageStart = messageStart + indexOfBreak + 1;
 
