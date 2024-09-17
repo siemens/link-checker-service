@@ -650,6 +650,9 @@ func (c *URLCheckerClient) tryHeadRequestAsBrowserIfForbidden(ctx context.Contex
 
 func (c *URLCheckerClient) limitedBody(response *resty.Response) string {
 	body := response.RawBody()
+	if body == nil {
+		return ""
+	}
 	defer body.Close()
 	return safelyTrimmedStream(body, c.settings.LimitBodyToNBytes)
 }
