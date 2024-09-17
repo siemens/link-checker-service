@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var instanceId string = ""
+var instanceId = ""
 var runningSince int64 = 0
 
 func GetInstanceId() string {

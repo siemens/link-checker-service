@@ -103,8 +103,8 @@ func createTestCertificates() (string, string, interface{}) {
 
 func createJWTToken(privKey interface{}) (string, error) {
 	token := jwt.New(jwt.SigningMethodRS384)
-	token.Claims = &jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(3 * time.Minute).UTC().Unix(),
+	token.Claims = &jwt.RegisteredClaims{
+		ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(3 * time.Minute).UTC()},
 	}
 	return token.SignedString(privKey)
 }

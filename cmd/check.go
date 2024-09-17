@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 
 	"github.com/siemens/link-checker-service/infrastructure"
@@ -24,7 +24,7 @@ var checkCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// disable logging so that there's only JSON output in the console
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 		checker := infrastructure.NewURLCheckerClient()
 		checkResult := checker.CheckURL(context.Background(), args[0])
 
