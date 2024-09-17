@@ -8,8 +8,13 @@ package infrastructure
 
 import (
 	"context"
+	"fmt"
+	"github.com/stretchr/testify/require"
+	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,10 +41,11 @@ func TestOkUrls(t *testing.T) {
 func TestSearchingForBodyPatterns(t *testing.T) {
 	setUpViperTestConfiguration()
 	viper.Set("searchForBodyPatterns", true)
+	viper.Set("HTTPClient.limitBodyToNBytes", uint(0))
 	res := NewURLCheckerClient().CheckURL(context.Background(), "https://google.com")
 	assert.Nil(t, res.Error)
 	assert.Equal(t, http.StatusOK, res.Code)
-	assert.Len(t, res.BodyPatternsFound, 1)
+	require.Contains(t, res.BodyPatternsFound, "google")
 	assert.Equal(t, "google", res.BodyPatternsFound[0], "should have found at least one mention of google")
 }
 
@@ -71,6 +77,7 @@ func setUpViperTestConfiguration() {
 	viper.Set("HTTPClient.timeoutSeconds", uint(15))
 	viper.Set("HTTPClient.maxRedirectsCount", uint(15))
 	viper.Set("HTTPClient.enableRequestTracing", false)
+	viper.Set("HTTPClient.limitBodyToNBytes", uint(0))
 	viper.Set("searchForBodyPatterns", false)
 	viper.Set("urlCheckerPlugins", []string{})
 	patterns := []struct {
@@ -78,6 +85,8 @@ func setUpViperTestConfiguration() {
 		Regex string
 	}{
 		{"google", "google"},
+		{"start-a", "start-a"},
+		{"ab", "ab"},
 	}
 	viper.Set("bodyPatterns", patterns)
 }
@@ -142,4 +151,27 @@ func TestResponseTimeout(t *testing.T) {
 	assert.Less(t, res.ElapsedMs, int64(3000), "at most 3 seconds must have passed")
 	assert.NotNil(t, res.Error, "the response should have failed due to the abort")
 	assert.NotEqual(t, http.StatusOK, res.Code)
+}
+
+func TestLimitingBodyReading(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprintln(w,
+			"start-"+
+				strings.Repeat("a", 100)+
+				strings.Repeat("b", 100))
+	}))
+	log.Println("Test server started at:", ts.URL)
+	defer ts.Close()
+	setUpViperTestConfiguration()
+	viper.Set("searchForBodyPatterns", true)
+	viper.Set("HTTPClient.limitBodyToNBytes", uint(100))
+	res := NewURLCheckerClient().CheckURL(context.Background(), ts.URL)
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Contains(t, res.BodyPatternsFound, "start-a")
+	assert.NotContains(
+		t,
+		res.BodyPatternsFound,
+		"ab",
+		"the repeated 'b' part of the message should have not been processed",
+	)
 }

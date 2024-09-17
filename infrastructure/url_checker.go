@@ -10,6 +10,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+const defaultLimitBodyToNBytes = 0
 const defaultMaxRedirectsCount = 15
 const defaultTimeoutSeconds = 10
 const defaultUserAgent = "lcs/0.9"
@@ -72,6 +74,7 @@ type urlCheckerSettings struct {
 	EnableRequestTracing  bool
 	URLCheckerPlugins     []string
 	PacScriptURL          string
+	LimitBodyToNBytes     uint
 }
 
 // URLChecker interface that all layers should conform to
@@ -203,6 +206,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 		UserAgent:         defaultUserAgent,
 		BrowserUserAgent:  defaultBrowserUserAgent,
 		AcceptHeader:      defaultAcceptHeader,
+		LimitBodyToNBytes: defaultLimitBodyToNBytes,
 	}
 
 	if proxyURL := viper.GetString("proxy"); proxyURL != "" {
@@ -220,6 +224,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 	}
 
 	s.MaxRedirectsCount = viper.GetUint("HTTPClient.maxRedirectsCount")
+	s.LimitBodyToNBytes = viper.GetUint("HTTPClient.limitBodyToNBytes")
 	s.TimeoutSeconds = viper.GetUint("HTTPClient.timeoutSeconds")
 	if v := viper.GetString("HTTPClient.userAgent"); v != "" {
 		s.UserAgent = v
@@ -240,6 +245,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 	log.Printf("HTTP client AcceptHeader: %v", s.AcceptHeader)
 	log.Printf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
 	log.Printf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
+	log.Printf("HTTP client LimitBodyToNBytes: %v", s.LimitBodyToNBytes)
 
 	// advanced configuration feature: only configurable via the config file
 	s.SearchForBodyPatterns = viper.GetBool("searchForBodyPatterns")
@@ -484,12 +490,13 @@ func (c *URLCheckerClient) tryGetRequestAndProcessResponseBody(ctx context.Conte
 		shouldRetryBasedOnStatus(res.Code) {
 		response, err := client.R().
 			SetHeader("Accept", c.settings.AcceptHeader).
+			SetDoNotParseResponse(true).
 			SetContext(ctx).
 			SetHeader("User-Agent", c.settings.BrowserUserAgent).
 			Get(urlToCheck)
 		res = c.processResponse(urlToCheck, response, err)
 		if c.settings.SearchForBodyPatterns && response != nil {
-			body = response.String()
+			body = c.limitedBody(response)
 		}
 	}
 
@@ -639,6 +646,23 @@ func (c *URLCheckerClient) tryHeadRequestAsBrowserIfForbidden(ctx context.Contex
 		res = c.processResponse(urlToCheck, response, err)
 	}
 	return res
+}
+
+func (c *URLCheckerClient) limitedBody(response *resty.Response) string {
+	body := response.RawBody()
+	defer func() { _ = body.Close() }()
+
+	var reader io.Reader = body
+
+	if c.settings.LimitBodyToNBytes > 0 {
+		reader = io.LimitReader(body, int64(c.settings.LimitBodyToNBytes))
+	}
+
+	b, err := io.ReadAll(reader)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
 
 func buildClient(settings urlCheckerSettings) *resty.Client {
