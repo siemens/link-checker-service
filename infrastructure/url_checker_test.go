@@ -8,8 +8,15 @@ package infrastructure
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/stretchr/testify/require"
+	"io"
+	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,10 +43,11 @@ func TestOkUrls(t *testing.T) {
 func TestSearchingForBodyPatterns(t *testing.T) {
 	setUpViperTestConfiguration()
 	viper.Set("searchForBodyPatterns", true)
+	viper.Set("HTTPClient.limitBodyToNBytes", uint(0))
 	res := NewURLCheckerClient().CheckURL(context.Background(), "https://google.com")
 	assert.Nil(t, res.Error)
 	assert.Equal(t, http.StatusOK, res.Code)
-	assert.Len(t, res.BodyPatternsFound, 1)
+	require.Contains(t, res.BodyPatternsFound, "google")
 	assert.Equal(t, "google", res.BodyPatternsFound[0], "should have found at least one mention of google")
 }
 
@@ -71,6 +79,7 @@ func setUpViperTestConfiguration() {
 	viper.Set("HTTPClient.timeoutSeconds", uint(15))
 	viper.Set("HTTPClient.maxRedirectsCount", uint(15))
 	viper.Set("HTTPClient.enableRequestTracing", false)
+	viper.Set("HTTPClient.limitBodyToNBytes", uint(0))
 	viper.Set("searchForBodyPatterns", false)
 	viper.Set("urlCheckerPlugins", []string{})
 	patterns := []struct {
@@ -78,6 +87,8 @@ func setUpViperTestConfiguration() {
 		Regex string
 	}{
 		{"google", "google"},
+		{"start-a", "start-a"},
+		{"ab", "ab"},
 	}
 	viper.Set("bodyPatterns", patterns)
 }
@@ -142,4 +153,98 @@ func TestResponseTimeout(t *testing.T) {
 	assert.Less(t, res.ElapsedMs, int64(3000), "at most 3 seconds must have passed")
 	assert.NotNil(t, res.Error, "the response should have failed due to the abort")
 	assert.NotEqual(t, http.StatusOK, res.Code)
+}
+
+const startChunk = "start-"
+
+var testStringToLimit = startChunk +
+	strings.Repeat("a", 300) +
+	strings.Repeat("b", 300)
+
+func TestLimitingBodyReading(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprintln(w,
+			testStringToLimit)
+	}))
+	log.Println("Test server started at:", ts.URL)
+	defer ts.Close()
+	setUpViperTestConfiguration()
+	viper.Set("searchForBodyPatterns", true)
+	viper.Set("HTTPClient.limitBodyToNBytes", uint(100))
+	res := NewURLCheckerClient().CheckURL(context.Background(), ts.URL)
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Contains(t, res.BodyPatternsFound, "start-a")
+	assert.NotContains(
+		t,
+		res.BodyPatternsFound,
+		"ab",
+		"the repeated 'b' part of the message should have not been processed",
+	)
+}
+
+func Test_safelyTrimmedStream(t *testing.T) {
+	t.Run("limiting empty input produces empty string", func(t *testing.T) {
+		assert.Equal(t, "", safelyTrimmedStream(streamOf(""), 10))
+	})
+
+	t.Run("non-empty input is not limited if no limit configured", func(t *testing.T) {
+		assert.Equal(t, testStringToLimit, safelyTrimmedStream(streamOf(testStringToLimit), 0))
+	})
+
+	t.Run("limiting input to a size smaller than a chunk returns string of the limit length",
+		func(t *testing.T) {
+			assert.Equal(t, startChunk, safelyTrimmedStream(streamOf(testStringToLimit), uint(len(startChunk))))
+		})
+
+	t.Run("limiting input to a size larger than itself returns the original string",
+		func(t *testing.T) {
+			assert.Equal(t, testStringToLimit, safelyTrimmedStream(streamOf(testStringToLimit), 2000))
+		})
+
+	t.Run("limiting input to one byte results in one character",
+		func(t *testing.T) {
+			assert.Equal(t, 1, len(safelyTrimmedStream(streamOf(testStringToLimit), 1)))
+		})
+
+	t.Run("limiting input larger than the the buffer (1kB) to a limit larger than the buffer trims the input",
+		func(t *testing.T) {
+			assert.Equal(t, 1200, len(safelyTrimmedStream(streamOf(
+				strings.Repeat(testStringToLimit, 2),
+			), 1200)))
+		})
+
+	t.Run("trimming the errored stream returns the input processed", func(t *testing.T) {
+		assert.Equal(t, "abc", safelyTrimmedStream(faultyReaderOf(
+			"abc,d", 3,
+		), 10))
+	})
+
+	t.Run("untrimmed errored stream returns the input processed", func(t *testing.T) {
+		assert.Equal(t, "abc", safelyTrimmedStream(faultyReaderOf(
+			"abc,d", 3,
+		), 0))
+	})
+}
+
+type faultyReader struct {
+	input   string
+	errorAt int
+}
+
+func (f *faultyReader) Read(p []byte) (int, error) {
+	for i := 0; i < f.errorAt; i++ {
+		p[i] = f.input[i]
+	}
+	return f.errorAt, errors.New("expected fault")
+}
+
+func faultyReaderOf(s string, i int) io.Reader {
+	return &faultyReader{
+		input:   s,
+		errorAt: i,
+	}
+}
+
+func streamOf(s string) io.Reader {
+	return strings.NewReader(s)
 }

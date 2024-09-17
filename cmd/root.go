@@ -42,6 +42,7 @@ const (
 	proxyKey                = "proxy"
 	pacScriptURLKey         = "pacScriptURL"
 	maxRedirectsCountKey    = "maxRedirectsCount"
+	limitBodyToNBytesKey    = "limitBodyToNBytes"
 	timeoutSecondsKey       = "timeoutSeconds"
 	userAgentKey            = "userAgent"
 	browserUserAgentKey     = "browserUserAgent"
@@ -102,6 +103,8 @@ func init() {
 	_ = viper.BindPFlag(httpClientMapKey+skipCertificateCheckKey, rootCmd.PersistentFlags().Lookup(skipCertificateCheckKey))
 	rootCmd.PersistentFlags().Bool(enableRequestTracingKey, false, "HTTP client: enable request tracing")
 	_ = viper.BindPFlag(httpClientMapKey+enableRequestTracingKey, rootCmd.PersistentFlags().Lookup(enableRequestTracingKey))
+	rootCmd.PersistentFlags().Uint(limitBodyToNBytesKey, 0, "HTTP client: maximum number of bytes to read from the body when searching for patterns. Unlimited if 0!")
+	_ = viper.BindPFlag(httpClientMapKey+limitBodyToNBytesKey, rootCmd.PersistentFlags().Lookup(limitBodyToNBytesKey))
 	// service
 	rootCmd.PersistentFlags().UintP(maxConcurrentHTTPRequestsKey, "c", 256, "maximum number of total concurrent HTTP requests")
 	_ = viper.BindPFlag(maxConcurrentHTTPRequestsKey, rootCmd.PersistentFlags().Lookup(maxConcurrentHTTPRequestsKey))
