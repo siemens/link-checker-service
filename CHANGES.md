@@ -2,12 +2,6 @@
 
 Notable changes will be documented here
 
-## 0.9.37
-
-- limiting processing the response body via `limitBodyToNBytes` when `searchForBodyPatterns==true`
-- upgraded dependencies
-- Go v1.23
-
 ## 0.9.36
 
 - upgraded dependencies
