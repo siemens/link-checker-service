@@ -1,5 +1,5 @@
 # build
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 WORKDIR /link-checker-service/
 # cache dependencies
 COPY go.mod go.sum ./
