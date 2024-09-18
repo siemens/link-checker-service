@@ -8,7 +8,7 @@ require (
 	github.com/MicahParks/keyfunc v1.9.0
 	github.com/appleboy/gin-jwt/v2 v2.10.0
 	github.com/darren/gpac v0.0.0-20210609082804-b56d6523a3af
-	github.com/dgraph-io/ristretto v0.1.1
+	github.com/dgraph-io/ristretto v1.0.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-resty/resty/v2 v2.15.0
@@ -43,7 +43,6 @@ require (
 	github.com/go-playground/validator/v10 v10.22.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
-	github.com/golang/glog v1.2.2 // indirect
 	github.com/google/pprof v0.0.0-20240910150728-a0b0bb1d4134 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

@@ -20,7 +20,7 @@ type resultCache interface {
 }
 
 type ristrettoCache struct {
-	cache             *ristretto.Cache
+	cache             *ristretto.Cache[string, *URLCheckResult]
 	defaultExpiration time.Duration
 }
 
@@ -32,7 +32,7 @@ func (c ristrettoCache) Get(url string) (*URLCheckResult, bool) {
 	value, found := c.cache.Get(url)
 
 	if found {
-		return value.(*URLCheckResult), true
+		return value, true
 	}
 
 	return nil, false
@@ -66,7 +66,7 @@ func newCache(settings cacheSettings) resultCache {
 
 func newRistrettoCache(settings cacheSettings) *ristrettoCache {
 	// https://github.com/dgraph-io/ristretto#Config
-	rc, err := ristretto.NewCache(&ristretto.Config{
+	rc, err := ristretto.NewCache(&ristretto.Config[string, *URLCheckResult]{
 		NumCounters: settings.cacheNumCounters, // number of keys to track frequency of (~10x max links)
 		MaxCost:     settings.cacheMaxSize,     // maximum cost of cache (in bytes)
 		BufferItems: 64,                        // number of keys per Get buffer: as recommended
