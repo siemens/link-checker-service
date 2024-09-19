@@ -97,6 +97,30 @@ func TestDomainsStatsSerialization(t *testing.T) {
 	assert.Equal(t, deserialized.DomainStats["example.com"].Ok, int64(11))
 }
 
+func TestDeepCopyingStats(t *testing.T) {
+	const domain = "some.domain"
+	s1 := newStatsState()
+	s1.OnLinkErrored(domain)
+	s1.OnCacheHit()
+	// given some stats
+	assert.Equal(t, int64(1), s1.GetStats().CacheHits)
+	assert.Equal(t, int64(1), s1.GetDomainStats().DomainStats[domain].BrokenBecause[erroredStatus])
+	// and a copy
+	statsCopy := s1.GetStats()
+	domainStatsCopy := s1.GetDomainStats()
+	// when I modify the copy (e.g. via a programming mistake)
+	domainStatsCopy.DomainStats[domain].BrokenBecause[erroredStatus]++
+	domainStatsCopy.DomainStats["another.domain"] = DomainStats{}
+	statsCopy.CacheHits++
+	// then the original stays the same
+	assert.Equal(t, int64(1), s1.GetStats().CacheHits)
+	assert.Equal(t, int64(2), statsCopy.CacheHits)
+	assert.Equal(t, int64(1), s1.GetDomainStats().DomainStats[domain].BrokenBecause[erroredStatus])
+	assert.Equal(t, int64(2), domainStatsCopy.DomainStats[domain].BrokenBecause[erroredStatus])
+	assert.Len(t, s1.GetDomainStats().DomainStats, 1)
+	assert.Len(t, domainStatsCopy.DomainStats, 2)
+}
+
 func addStats(numGoroutines int, count int) {
 	var wg sync.WaitGroup
 

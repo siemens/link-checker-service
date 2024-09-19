@@ -6,7 +6,17 @@
 
 package infrastructure
 
-import "sync"
+import (
+	"maps"
+	"sync"
+)
+
+const (
+	erroredStatus             = "errored"
+	dnsResolutionFailedStatus = "dns_resolution_failed"
+	droppedStatus             = "dropped"
+	skippedStatus             = "skipped"
+)
 
 // Stats of the link checker service
 type Stats struct {
@@ -78,7 +88,7 @@ func (stats *StatsState) OnOutgoingRequest() {
 func (stats *StatsState) OnDNSResolutionFailed(domain string) {
 	stats.Lock()
 	stats.s.DNSResolutionsFailed++
-	stats.incrementOrDefaultStatus(domain, "dns_resolution_failed")
+	stats.incrementOrDefaultStatus(domain, dnsResolutionFailedStatus)
 	stats.Unlock()
 }
 
@@ -86,7 +96,7 @@ func (stats *StatsState) OnDNSResolutionFailed(domain string) {
 func (stats *StatsState) OnLinkErrored(domain string) {
 	stats.Lock()
 	stats.s.LinkChecksErrored++
-	stats.incrementOrDefaultStatus(domain, "errored")
+	stats.incrementOrDefaultStatus(domain, erroredStatus)
 	stats.Unlock()
 }
 
@@ -116,7 +126,7 @@ func (stats *StatsState) OnLinkBroken(domain string, status string) {
 func (stats *StatsState) OnLinkDropped(domain string) {
 	stats.Lock()
 	stats.s.LinkChecksDropped++
-	stats.incrementOrDefaultStatus(domain, "dropped")
+	stats.incrementOrDefaultStatus(domain, droppedStatus)
 	stats.Unlock()
 }
 
@@ -124,7 +134,7 @@ func (stats *StatsState) OnLinkDropped(domain string) {
 func (stats *StatsState) OnLinkSkipped(domain string) {
 	stats.Lock()
 	stats.s.LinkChecksSkipped++
-	stats.incrementOrDefaultStatus(domain, "skipped")
+	stats.incrementOrDefaultStatus(domain, skippedStatus)
 	stats.Unlock()
 }
 
@@ -153,7 +163,14 @@ func (stats *StatsState) GetStats() Stats {
 func (stats *StatsState) GetDomainStats() DomainStatsResponse {
 	stats.RLock()
 	defer stats.RUnlock()
-	return DomainStatsResponse{stats.d} // a copy
+	deepClone := make(map[string]DomainStats)
+	for k, v := range stats.d {
+		deepClone[k] = DomainStats{
+			Ok:            v.Ok,
+			BrokenBecause: maps.Clone(v.BrokenBecause),
+		}
+	}
+	return DomainStatsResponse{deepClone} // a copy
 }
 
 func (stats *StatsState) incrementOrDefaultOk(domain string) {
