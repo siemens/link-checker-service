@@ -377,6 +377,7 @@ type URLCheckerPluginTrace struct {
 // CheckURL checks a single URL
 func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckResult {
 	var lastRes *URLCheckResult = nil
+	var result URLCheckResult
 	var checkerTrace []URLCheckerPluginTrace
 	start := time.Now()
 	errorMessage := ""
@@ -407,12 +408,14 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 	}
 
 	if lastRes != nil {
-		lastRes.CheckerTrace = checkerTrace
+		result = *lastRes
+		result.CheckerTrace = checkerTrace
 		elapsed := time.Since(start)
-		lastRes.ElapsedMs = int64(elapsed / time.Millisecond)
+		result.ElapsedMs = int64(elapsed / time.Millisecond)
+		return &result
 	}
 
-	return lastRes
+	return nil
 }
 
 func normalizeAddressOf(input string) string {
