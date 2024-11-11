@@ -140,34 +140,38 @@ func TestCORS(t *testing.T) {
 	})
 	router := testServer.Detail()
 
-	// no Origin header
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
-	router.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code, "the call without an origin header should have succeeded")
+	t.Run("no Origin header", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "the call without an origin header should have succeeded")
+	})
 
-	// with a correct Origin header
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
-	req.Header.Add("Origin", okOrigin)
-	router.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code, "correct origin should be allowed by CORS")
+	t.Run("with a correct Origin header", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
+		req.Header.Add("Origin", okOrigin)
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "correct origin should be allowed by CORS")
+	})
 
-	// with an incorrect Origin header
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
-	req.Header.Add("Origin", wrongOrigin)
-	router.ServeHTTP(w, req)
-	assert.NotEqual(t, http.StatusOK, w.Code, "incorrect origin header should be blocked by CORS")
+	t.Run("with an incorrect Origin header", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
+		req.Header.Add("Origin", wrongOrigin)
+		router.ServeHTTP(w, req)
+		assert.NotEqual(t, http.StatusOK, w.Code, "incorrect origin header should be blocked by CORS")
+	})
 
-	// start without a CORS configuration
-	testServer = server.NewServer()
-	router = testServer.Detail()
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
-	req.Header.Add("Origin", wrongOrigin)
-	router.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code, "default server should allow any origin")
+	t.Run("start without a CORS configuration", func(t *testing.T) {
+		testServer = server.NewServer()
+		router = testServer.Detail()
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
+		req.Header.Add("Origin", wrongOrigin)
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "default server should allow any origin")
+	})
 }
 
 func TestRateLimiting(t *testing.T) {
