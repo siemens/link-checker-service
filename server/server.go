@@ -168,7 +168,7 @@ func (s *Server) setupRoutes() {
 
 func (s *Server) checkURLs(c *gin.Context) {
 	infrastructure.GlobalStats().OnIncomingRequest()
-	request, abort := s.parseURLCheckRequestOrAbort(c)
+	request, abort := s.parseURLCheckRequestOrAbort(c, false)
 	if abort {
 		return
 	}
@@ -217,7 +217,7 @@ func (s *Server) checkURLsStream(c *gin.Context) {
 	infrastructure.GlobalStats().OnIncomingRequest()
 	infrastructure.GlobalStats().OnIncomingStreamRequest()
 
-	request, abort := s.parseURLCheckRequestOrAbort(c)
+	request, abort := s.parseURLCheckRequestOrAbort(c, true)
 	if abort {
 		return
 	}
@@ -254,7 +254,7 @@ func (s *Server) checkURLsStream(c *gin.Context) {
 	})
 }
 
-func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context) (CheckURLsRequest, bool) {
+func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context, stream bool) (CheckURLsRequest, bool) {
 	var request CheckURLsRequest
 	err := c.BindJSON(&request)
 	if err != nil {
@@ -262,9 +262,11 @@ func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context) (CheckURLsRequest, 
 		return CheckURLsRequest{}, true
 	}
 	count := len(request.Urls)
-	if count > largeRequestLoggingThreshold {
-		log.Info().Msgf("Large request: %v urls", count)
-	}
+	log.Info().
+		Int("count", count).
+		Bool("large", count > largeRequestLoggingThreshold).
+		Bool("stream", stream).
+		Msg("Link check request")
 
 	if s.options.MaxURLsInRequest != 0 && uint(count) > s.options.MaxURLsInRequest {
 		c.String(http.StatusRequestEntityTooLarge, "Number of URLs in request limit exceeded")
