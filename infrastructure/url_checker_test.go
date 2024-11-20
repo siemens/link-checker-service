@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Siemens AG
+// Copyright 2020-2024 Siemens AG
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"log"
 	"net/http"
@@ -19,6 +18,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/spf13/viper"
 

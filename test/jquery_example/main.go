@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Siemens AG
+// Copyright 2020-2024 Siemens AG
 // This Source Code Form is subject to the terms of
 // Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) license
 // https://creativecommons.org/licenses/by-sa/4.0/
