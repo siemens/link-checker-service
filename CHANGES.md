@@ -2,6 +2,10 @@
 
 Notable changes will be documented here
 
+## 0.9.38
+
+- unified logging
+
 ## 0.9.37
 
 - limiting processing the response body via `limitBodyToNBytes` when `searchForBodyPatterns==true`
