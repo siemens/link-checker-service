@@ -10,8 +10,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/siemens/link-checker-service/infrastructure"
 	"github.com/spf13/cobra"
@@ -24,14 +24,14 @@ var checkCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// disable logging so that there's only JSON output in the console
-		log.SetOutput(io.Discard)
+		zerolog.SetGlobalLevel(zerolog.Disabled)
 		checker := infrastructure.NewURLCheckerClient()
 		checkResult := checker.CheckURL(context.Background(), args[0])
 
 		// prints a JSON-formatted raw check result representation
 		b, err := json.MarshalIndent(checkResult, "", " ")
 		if err != nil {
-			log.Fatal(fmt.Errorf("ERROR: %v", err))
+			log.Fatal().Err(err).Msg("check command failed")
 		}
 		fmt.Println(string(b))
 	},

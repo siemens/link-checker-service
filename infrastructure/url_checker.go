@@ -11,10 +11,11 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptrace"
+
+	"github.com/rs/zerolog/log"
 
 	"regexp"
 	"strings"
@@ -113,13 +114,13 @@ func NewURLCheckerClient() *URLCheckerClient {
 		case "urlcheck":
 			// default client
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck", buildClient(urlCheckerSettings)))
-			log.Println("Added the defaut URL checker")
+			log.Info().Msg("Added the defaut URL checker")
 		case "urlcheck-pac":
 			if c.settings.PacScriptURL == "" {
 				panic("Cannot instantiate a 'urlcheck-pac' checker without a proxy auto-config script configured")
 			}
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
-			log.Println("Added the PAC file based URL checker")
+			log.Info().Msg("Added the PAC file based URL checker")
 		case "urlcheck-noproxy":
 			// if proxy is defined, add one without the proxy as fallback
 			if urlCheckerSettings.ProxyURL == "" {
@@ -129,7 +130,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 			urlCheckerSettingsNoProxy := urlCheckerSettings
 			urlCheckerSettingsNoProxy.ProxyURL = ""
 			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-noproxy", buildClient(urlCheckerSettingsNoProxy)))
-			log.Println("Added the URL checker that doesn't use a proxy")
+			log.Info().Msg("Added the URL checker that doesn't use a proxy")
 		case "_ok_after_1s_on_delay.com":
 			// fake client for testing
 			checkers = addChecker(checkers, &fakeURLChecker{1 * time.Second, &URLCheckResult{
@@ -140,7 +141,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 				BodyPatternsFound:     nil,
 				RemoteAddr:            "",
 			}, "_ok_after_1s_on_delay.com"})
-			log.Println("Added the _always_ok checker")
+			log.Info().Msg("Added the _always_ok checker")
 		case "_always_ok":
 			// fake client for testing
 			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
@@ -151,7 +152,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 				BodyPatternsFound:     nil,
 				RemoteAddr:            "",
 			}, "_always_ok"})
-			log.Println("Added the _always_ok checker")
+			log.Info().Msg("Added the _always_ok checker")
 		case "_always_bad":
 			// fake client for testing
 			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
@@ -162,7 +163,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 				BodyPatternsFound:     nil,
 				RemoteAddr:            "",
 			}, "_always_bad"})
-			log.Println("Added the _always_bad checker")
+			log.Info().Msg("Added the _always_bad checker")
 		default:
 			panic(fmt.Errorf("unknown checker: %v", checkerName))
 		}
@@ -182,7 +183,7 @@ func parsePacScript(scriptURL string) *gpac.Parser {
 	if err != nil {
 		panic(fmt.Errorf("could not fetch a PAC script from %v: %v", scriptURL, err.Error()))
 	}
-	log.Printf("Read PAC script from %v", scriptURL)
+	log.Info().Msgf("Read PAC script from %v", scriptURL)
 	script := string(res.Body())
 	pac, err := gpac.New(script)
 	if err != nil {
@@ -212,9 +213,9 @@ func getURLCheckerSettings() urlCheckerSettings {
 	if proxyURL := viper.GetString("proxy"); proxyURL != "" {
 		_, err := netUrl.Parse(proxyURL)
 		if err != nil {
-			log.Printf("Rejected proxyURL: %v", proxyURL)
+			log.Warn().Err(err).Msgf("Rejected proxyURL: %v", proxyURL)
 		} else {
-			log.Printf("URLCheckerClient is using a proxy: %v", proxyURL)
+			log.Info().Msgf("URLCheckerClient is using a proxy: %v", proxyURL)
 			s.ProxyURL = proxyURL
 		}
 	}
@@ -238,20 +239,20 @@ func getURLCheckerSettings() urlCheckerSettings {
 	s.SkipCertificateCheck = viper.GetBool("HTTPClient.skipCertificateCheck")
 	s.EnableRequestTracing = viper.GetBool("HTTPClient.enableRequestTracing")
 
-	log.Printf("HTTP client MaxRedirectsCount: %v", s.MaxRedirectsCount)
-	log.Printf("HTTP client TimeoutSeconds: %v", s.TimeoutSeconds)
-	log.Printf("HTTP client UserAgent: %v", s.UserAgent)
-	log.Printf("HTTP client BrowserUserAgent: %v", s.BrowserUserAgent)
-	log.Printf("HTTP client AcceptHeader: %v", s.AcceptHeader)
-	log.Printf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
-	log.Printf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
-	log.Printf("HTTP client LimitBodyToNBytes: %v", s.LimitBodyToNBytes)
+	log.Info().Msgf("HTTP client MaxRedirectsCount: %v", s.MaxRedirectsCount)
+	log.Info().Msgf("HTTP client TimeoutSeconds: %v", s.TimeoutSeconds)
+	log.Info().Msgf("HTTP client UserAgent: %v", s.UserAgent)
+	log.Info().Msgf("HTTP client BrowserUserAgent: %v", s.BrowserUserAgent)
+	log.Info().Msgf("HTTP client AcceptHeader: %v", s.AcceptHeader)
+	log.Info().Msgf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
+	log.Info().Msgf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
+	log.Info().Msgf("HTTP client LimitBodyToNBytes: %v", s.LimitBodyToNBytes)
 
 	// advanced configuration feature: only configurable via the config file
 	s.SearchForBodyPatterns = viper.GetBool("searchForBodyPatterns")
 
 	if s.SearchForBodyPatterns {
-		log.Printf("Will search for regex patterns found in HTTP response bodies")
+		log.Info().Msg("Will search for regex patterns found in HTTP response bodies")
 		var configBodyPatterns []BodyPatternConfig
 		// advanced configuration feature: only configurable via the config file
 		if err := viper.UnmarshalKey("bodyPatterns", &configBodyPatterns); err == nil {
@@ -261,7 +262,7 @@ func getURLCheckerSettings() urlCheckerSettings {
 					name:    pattern.Name,
 					pattern: r,
 				})
-				log.Printf("Body search pattern found. Name: '%v', Regex: '%v'", pattern.Name, pattern.Regex)
+				log.Info().Msgf("Body search pattern found. Name: '%v', Regex: '%v'", pattern.Name, pattern.Regex)
 			}
 		}
 	}
@@ -361,7 +362,7 @@ func (l *localURLChecker) autoSelectClientFor(urlToCheck string) *resty.Client {
 			}
 		}
 	} else {
-		log.Printf("Could not find a proxy for %v", sanitizeUserLogInput(urlToCheck))
+		log.Warn().Msgf("Could not find a proxy for %v", sanitizeUserLogInput(urlToCheck))
 	}
 	return buildClient(tmpSettings)
 }
@@ -546,7 +547,7 @@ func (c *URLCheckerClient) resolveAndCacheTCPAddr(network string, err error, add
 		} else {
 			GlobalStats().OnDNSResolutionFailed(domain)
 			c.dnsCache.Set(addrToResolve, "DNS resolution failed", defaultRetryFailedAfter)
-			log.Printf("ERROR in resolveAndCacheTCPAddr: %v", err)
+			log.Error().Err(err).Msg("resolveAndCacheTCPAddr")
 		}
 	}
 	return remoteAddr

@@ -9,9 +9,10 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"golang.org/x/time/rate"
 )
@@ -26,7 +27,7 @@ type DomainRateLimitedChecker struct {
 // NewDomainRateLimitedChecker Creates a new domain-rate-limited URLCheckerClient instance
 func NewDomainRateLimitedChecker(ratePerSecond rate.Limit) *DomainRateLimitedChecker {
 	if ratePerSecond > 0 {
-		log.Printf("Limiting amount of requests per domain to %v/s", ratePerSecond)
+		log.Info().Msgf("Limiting amount of requests per domain to %v/s", ratePerSecond)
 	}
 	return &DomainRateLimitedChecker{
 		domains:       sync.Map{},

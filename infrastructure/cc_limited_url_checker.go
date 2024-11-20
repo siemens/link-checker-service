@@ -9,8 +9,9 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"golang.org/x/time/rate"
 
@@ -46,7 +47,7 @@ func NewCCLimitedURLChecker() *CCLimitedURLChecker {
 		core.EmptyMetricRegistryInstance,
 	)
 	if err != nil {
-		log.Fatalf("Error creating limiter err=%v\n", err)
+		log.Fatal().Err(err).Msg("Error creating limiter")
 	}
 	guard := limiter.NewBlockingLimiter(defaultLimiter, 0, nil /*logger*/)
 	ratePerSecond := getDomainRatePerSecond()
@@ -68,7 +69,7 @@ func getDomainRatePerSecond() rate.Limit {
 func getMaxConcurrentRequests() int {
 	maxConcurrency := viper.GetUint("maxConcurrentHTTPRequests")
 	if maxConcurrency > 0 {
-		log.Printf("CCLimitedURLChecker is using max HTTP concurrency of %v", maxConcurrency)
+		log.Info().Msgf("CCLimitedURLChecker is using max HTTP concurrency of %v", maxConcurrency)
 	}
 	return defaultMaxConcurrentRequests
 }
@@ -87,7 +88,7 @@ func (r *CCLimitedURLChecker) checkURL(ctx context.Context, url string) *URLChec
 	token, ok := r.guard.Acquire(ctx)
 	if !ok {
 		// short-circuited - no need to try
-		log.Printf("guarded request short circuited for url '%v'\n", sanitizeUserLogInput(url))
+		log.Info().Msgf("guarded request short circuited for url '%v'\n", sanitizeUserLogInput(url))
 		if token != nil {
 			token.OnDropped()
 		}

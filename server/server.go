@@ -9,13 +9,14 @@ package server
 import (
 	"context"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gobwas/glob"
@@ -99,7 +100,7 @@ func configureGin(options *Options) *gin.Engine {
 	e.Use(gin.Recovery())
 
 	if options.DisableRequestLogging {
-		log.Println("Disabling request logging")
+		log.Info().Msg("Disabling request logging")
 		return e
 	}
 
@@ -121,9 +122,9 @@ func (s *Server) Detail() *gin.Engine {
 // Run starts the service instance (binds a port)
 // set the PORT environment variable for a different port to bind at
 func (s *Server) Run() {
-	log.Printf("Go version: %s\n", runtime.Version())
-	log.Printf("GOMAXPROCS: %v", runtime.GOMAXPROCS(-1))
-	log.Printf("Instance ID: %v", infrastructure.GetInstanceId())
+	log.Info().Msgf("Go version: %s\n", runtime.Version())
+	log.Info().Msgf("GOMAXPROCS: %v", runtime.GOMAXPROCS(-1))
+	log.Info().Msgf("Instance ID: %v", infrastructure.GetInstanceId())
 	var err error
 	if s.options.BindAddress != "" {
 		// custom bind address, e.g. 0.0.0.0:4444
@@ -133,7 +134,7 @@ func (s *Server) Run() {
 		err = s.server.Run()
 	}
 	if err != nil {
-		log.Fatalf("Could not start the server: %v", err)
+		log.Fatal().Err(err).Msg("Could not start the server")
 	}
 }
 
@@ -141,7 +142,7 @@ func (s *Server) setupRoutes() {
 	s.setUpCORS()
 
 	if s.options.MaxURLsInRequest > 0 {
-		log.Printf("Max URLs per request: %v", s.options.MaxURLsInRequest)
+		log.Info().Msgf("Max URLs per request: %v", s.options.MaxURLsInRequest)
 	}
 
 	checkURLsRoutes := s.server.Group("/checkUrls")
@@ -187,14 +188,14 @@ func (s *Server) checkURLsInParallel(ctx context.Context, request CheckURLsReque
 	for {
 		select {
 		case <-deadline.C:
-			log.Printf("Deadline reached, returning a partial result.")
+			log.Info().Msg("Deadline reached, returning a partial result.")
 			return &CheckURLsResponse{
 				Urls:   urls.allResultsDeduplicated(resultURLs),
 				Result: "partial",
 			}
 
 		case <-ctx.Done():
-			log.Printf("Client disconnected, aborting processing.")
+			log.Info().Msg("Client disconnected, aborting processing.")
 			return &CheckURLsResponse{
 				Urls:   urls.allResultsDeduplicated(resultURLs),
 				Result: "aborted",
@@ -229,14 +230,14 @@ func (s *Server) checkURLsStream(c *gin.Context) {
 	c.Stream(func(w io.Writer) bool {
 		select {
 		case <-deadline.C:
-			log.Printf("Deadline reached, aborting the stream.")
+			log.Info().Msg("Deadline reached, aborting the stream.")
 			return false
 		case <-ctx.Done():
-			log.Printf("Client disconnected, aborting the stream.")
+			log.Info().Msg("Client disconnected, aborting the stream.")
 			return false
 
 		case <-closeNotify:
-			log.Printf("Client closed the connection, aborting the stream.")
+			log.Info().Msg("Client closed the connection, aborting the stream.")
 			return false
 
 		case urlStatus := <-resultChannel:
@@ -262,7 +263,7 @@ func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context) (CheckURLsRequest, 
 	}
 	count := len(request.Urls)
 	if count > largeRequestLoggingThreshold {
-		log.Printf("Large request: %v urls", count)
+		log.Info().Msgf("Large request: %v urls", count)
 	}
 
 	if s.options.MaxURLsInRequest != 0 && uint(count) > s.options.MaxURLsInRequest {
@@ -284,7 +285,7 @@ func (s *Server) setUpCORS() {
 		corsConfig.AllowMethods = []string{"POST", "GET", "OPTIONS"}
 		corsConfig.AllowHeaders = []string{"last-event-id", "Authorization"}
 		corsConfig.AllowCredentials = true
-		log.Printf("Using CORS headers: %v", corsConfig.AllowOrigins)
+		log.Info().Msgf("Using CORS headers: %v", corsConfig.AllowOrigins)
 		s.server.Use(cors.New(corsConfig))
 	}
 }
@@ -294,7 +295,7 @@ func (s *Server) setUpAsyncURLCheck(ctx context.Context, request CheckURLsReques
 	count := len(urls.toCheck)
 	duplicateCount := len(urls.toDuplicate)
 	if duplicateCount > 0 {
-		log.Printf("Duplicate URLs found: %v", duplicateCount)
+		log.Info().Msgf("Duplicate URLs found: %v", duplicateCount)
 	}
 
 	deadline := time.NewTimer(time.Second * time.Duration(int64(math.Max(float64(totalRequestDeadlineTimeoutSecondsPerURL*count), float64(totalRequestDeadlineTimeoutSeconds)))))
@@ -384,13 +385,13 @@ func (s *Server) isBlacklisted(input URLRequest) bool {
 
 func (s *Server) setUpJWTValidation(routerGroups ...*gin.RouterGroup) {
 	if s.options.JWTValidationOptions == nil {
-		log.Fatal("JWT Validation not set up correctly")
+		log.Fatal().Msg("JWT Validation not set up correctly")
 	}
 
-	log.Println("Using JWT Validation")
-	log.Printf("  PrivKeyFile: %v", s.options.JWTValidationOptions.PrivKeyFile)
-	log.Printf("  PubKeyFile: %v", s.options.JWTValidationOptions.PubKeyFile)
-	log.Printf("  SigningAlgorithm: %v", s.options.JWTValidationOptions.SigningAlgorithm)
+	log.Info().Msg("Using JWT Validation")
+	log.Info().Msgf("  PrivKeyFile: %v", s.options.JWTValidationOptions.PrivKeyFile)
+	log.Info().Msgf("  PubKeyFile: %v", s.options.JWTValidationOptions.PubKeyFile)
+	log.Info().Msgf("  SigningAlgorithm: %v", s.options.JWTValidationOptions.SigningAlgorithm)
 
 	// the jwt middleware
 	middleware, err := ginGwt.New(&ginGwt.GinJWTMiddleware{
@@ -399,13 +400,13 @@ func (s *Server) setUpJWTValidation(routerGroups ...*gin.RouterGroup) {
 		PubKeyFile:       s.options.JWTValidationOptions.PubKeyFile,
 		SigningAlgorithm: s.options.JWTValidationOptions.SigningAlgorithm,
 		HTTPStatusMessageFunc: func(e error, c *gin.Context) string {
-			log.Printf("Token validation error: %v", e)
+			log.Error().Err(e).Msg("Token validation error")
 			return "Token validation error: unauthorized"
 		},
 	})
 
 	if err != nil {
-		log.Fatal("JWT Error:" + err.Error())
+		log.Fatal().Err(err).Msg("JWT Error")
 	}
 
 	for _, routerGroup := range routerGroups {
@@ -421,24 +422,24 @@ func tryGetJwksKeyFunc(jwksURL string) func(token *jwtv4.Token) (interface{}, er
 	if err != nil {
 		return nil
 	}
-	log.Printf("JWKS configured with the url: %s", jwksURL)
+	log.Info().Msgf("JWKS configured with the url: %s", jwksURL)
 	return kf.Keyfunc
 }
 
 func (s *Server) setUpRateLimiting(routerGroup *gin.RouterGroup) {
 	if s.options.IPRateLimit == "" {
-		log.Printf("Not using IP rate limiting")
+		log.Info().Msgf("Not using IP rate limiting")
 		return
 	}
 
 	// see https://github.com/ulule/limiter
 	rate, err := limiter.NewRateFromFormatted(s.options.IPRateLimit)
 	if err != nil {
-		log.Printf("Not using IP rate limiting: %v", err)
+		log.Info().Msgf("Not using IP rate limiting: %v", err)
 		return
 	}
 
-	log.Printf("Using IP rate limiting with a specified rate of %v", s.options.IPRateLimit)
+	log.Info().Msgf("Using IP rate limiting with a specified rate of %v", s.options.IPRateLimit)
 
 	store := memory.NewStore()
 

@@ -8,10 +8,11 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/siemens/link-checker-service/infrastructure"
 
@@ -177,24 +178,24 @@ func initConfig() {
 }
 
 func echoConfig() {
-	log.Printf("Link Checker Service. Version: %v", infrastructure.BinaryVersion())
+	log.Info().Msgf("Link Checker Service. Version: %v", infrastructure.BinaryVersion())
 
 	if viper.ConfigFileUsed() != "" {
-		log.Printf("Using config file: %v", viper.ConfigFileUsed())
+		log.Info().Msgf("Using config file: %v", viper.ConfigFileUsed())
 	}
 
 	proxyURL := viper.GetString(proxyKey)
 	if proxyURL != "" {
-		log.Printf("Proxy: %v", proxyURL)
+		log.Info().Msgf("Proxy: %v", proxyURL)
 	}
 
 	maxConcurrency := viper.GetUint(maxConcurrentHTTPRequestsKey)
 	if maxConcurrency > 0 {
-		log.Printf("Max HTTP concurrency: %v", maxConcurrency)
+		log.Info().Msgf("Max HTTP concurrency: %v", maxConcurrency)
 	}
 
 	globCount := len(domainBlacklistGlobs)
 	if globCount > 0 {
-		log.Printf("Domain blacklist globs (%v): %v", globCount, domainBlacklistGlobs)
+		log.Info().Msgf("Domain blacklist globs (%v): %v", globCount, domainBlacklistGlobs)
 	}
 }

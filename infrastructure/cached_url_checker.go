@@ -8,8 +8,9 @@ package infrastructure
 
 import (
 	"context"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/viper"
 )
@@ -54,22 +55,22 @@ func fetchCachedURLCheckerSettings() cacheSettings {
 
 	cacheExpirationInterval := viper.GetString("cacheExpirationInterval")
 	if d, err := time.ParseDuration(cacheExpirationInterval); err != nil {
-		log.Printf("Ignoring cacheExpirationInterval %v -> %v (%v)", cacheExpirationInterval, defaultCacheExpirationInterval, err)
+		log.Info().Msgf("Ignoring cacheExpirationInterval %v -> %v (%v)", cacheExpirationInterval, defaultCacheExpirationInterval, err)
 	} else {
 		s.cacheExpirationInterval = d
-		log.Printf("cacheExpirationInterval: %v", cacheExpirationInterval)
+		log.Info().Msgf("cacheExpirationInterval: %v", cacheExpirationInterval)
 	}
 
 	cacheCleanupInterval := viper.GetString("cacheCleanupInterval")
 	if d, err := time.ParseDuration(cacheCleanupInterval); err != nil {
-		log.Printf("Ignoring cacheCleanupInterval %v -> %v (%v)", cacheCleanupInterval, defaultCacheCleanupInterval, err)
+		log.Info().Msgf("Ignoring cacheCleanupInterval %v -> %v (%v)", cacheCleanupInterval, defaultCacheCleanupInterval, err)
 	} else {
-		log.Printf("cacheCleanupInterval: %v", cacheCleanupInterval)
+		log.Info().Msgf("cacheCleanupInterval: %v", cacheCleanupInterval)
 		s.cacheCleanupInterval = d
 	}
 
 	cacheUseRistretto := viper.GetBool("cacheUseRistretto")
-	log.Printf("cacheUseRistretto: %v", cacheUseRistretto)
+	log.Info().Msgf("cacheUseRistretto: %v", cacheUseRistretto)
 	s.cacheUseRistretto = cacheUseRistretto
 
 	cacheMaxSize := defaultCacheMaxSize
@@ -85,15 +86,15 @@ func fetchCachedURLCheckerSettings() cacheSettings {
 	s.cacheNumCounters = cacheNumCounters
 
 	if cacheUseRistretto {
-		log.Printf("cacheMaxSize: %v", cacheMaxSize)
-		log.Printf("cacheNumCounters: %v", cacheNumCounters)
+		log.Info().Msgf("cacheMaxSize: %v", cacheMaxSize)
+		log.Info().Msgf("cacheNumCounters: %v", cacheNumCounters)
 	}
 
 	retryFailedAfter := viper.GetString("retryFailedAfter")
 	if d, err := time.ParseDuration(retryFailedAfter); err != nil {
-		log.Printf("Ignoring retryFailedAfter %v -> %v (%v)", cacheCleanupInterval, defaultRetryFailedAfter, err)
+		log.Info().Msgf("Ignoring retryFailedAfter %v -> %v (%v)", cacheCleanupInterval, defaultRetryFailedAfter, err)
 	} else {
-		log.Printf("retryFailedAfter: %v", retryFailedAfter)
+		log.Info().Msgf("retryFailedAfter: %v", retryFailedAfter)
 		s.retryFailedAfter = d
 	}
 	return s
