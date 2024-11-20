@@ -20,6 +20,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gobwas/glob"
 
+	ginzerolog "github.com/dn365/gin-zerolog"
+
 	"github.com/MicahParks/keyfunc"
 	ginGwt "github.com/appleboy/gin-jwt/v2"
 	jwtv4 "github.com/golang-jwt/jwt/v4"
@@ -93,13 +95,17 @@ func precompileGlobs(globs []string) []glob.Glob {
 }
 
 func configureGin(options *Options) *gin.Engine {
+	e := gin.New()
+	e.Use(gin.Recovery())
+
 	if options.DisableRequestLogging {
-		e := gin.New()
-		e.Use(gin.Recovery())
 		log.Println("Disabling request logging")
 		return e
 	}
-	return gin.Default()
+
+	e.Use(ginzerolog.Logger("gin"))
+
+	return e
 }
 
 // NewServer creates a new server instance

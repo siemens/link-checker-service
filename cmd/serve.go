@@ -7,6 +7,7 @@
 package cmd
 
 import (
+	"github.com/siemens/link-checker-service/infrastructure"
 	s "github.com/siemens/link-checker-service/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,6 +33,8 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts the link checker web server",
 	Run: func(cmd *cobra.Command, args []string) {
+		infrastructure.SetUpConsoleLogging()
+		infrastructure.SetUpGlobalLogger()
 		fetchConfig()
 		echoConfig()
 		server := s.NewServerWithOptions(&s.Options{
