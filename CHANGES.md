@@ -2,6 +2,11 @@
 
 Notable changes will be documented here
 
+## 0.9.39
+
+- upgraded dependencies
+- Go v1.24
+
 ## 0.9.38
 
 - unified logging
