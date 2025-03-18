@@ -1,8 +1,8 @@
 module github.com/siemens/link-checker-service/test/large_list_check
 
-go 1.22.0
+go 1.23.0
 
-toolchain go1.23.5
+toolchain go1.24.1
 
 require (
 	github.com/ahmetb/go-linq v3.0.0+incompatible
@@ -10,4 +10,4 @@ require (
 	mvdan.cc/xurls/v2 v2.6.0
 )
 
-require golang.org/x/net v0.35.0 // indirect
+require golang.org/x/net v0.37.0 // indirect
