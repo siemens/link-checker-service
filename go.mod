@@ -14,7 +14,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/gobwas/glob v0.2.3
-	github.com/golang-jwt/jwt/v4 v4.5.1
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	github.com/bytedance/sonic v1.13.1 // indirect
+	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
