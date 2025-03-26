@@ -6,7 +6,7 @@ toolchain go1.24.0
 
 require (
 	github.com/MicahParks/keyfunc v1.9.0
-	github.com/appleboy/gin-jwt/v2 v2.10.2
+	github.com/appleboy/gin-jwt/v2 v2.10.3
 	github.com/darren/gpac v0.0.0-20210609082804-b56d6523a3af
 	github.com/dgraph-io/ristretto/v2 v2.1.0
 	github.com/dn365/gin-zerolog v0.0.0-20171227063204-b43714b00db1
@@ -19,7 +19,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/platinummonkey/go-concurrency-limits v0.8.0
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.10.0
@@ -72,6 +72,6 @@ require (
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
