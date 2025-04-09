@@ -17,14 +17,13 @@ Routes:
 
 - get the binary into `$GOPATH/bin`
 
-
-```
+```shell
 go get -u github.com/siemens/link-checker-service
 ```
 
 &darr;
 
-```
+```shell
 link-checker-service serve
 ```
 
@@ -34,13 +33,13 @@ link-checker-service serve
 
 building from scratch:
 
-```bash
+```shell
 docker-compose up --build --force-recreate
 ```
 
 or using a published image:
 
-```bash
+```shell
 docker-compose up
 ```
 
@@ -48,7 +47,7 @@ replace the image tag in [docker-compose.yml](docker-compose.yml) if necessary
 
 - run from source:
 
-```bash
+```shell
 go run . serve
 ```
 
@@ -93,7 +92,7 @@ http POST localhost:8080/checkUrls urls:="[{"""url""":"""https://google.com""","
 
 or in *sh:
 
-```bash
+```shell
 http POST localhost:8080/checkUrls urls:='[{"url":"https://google.com","context":"0"},{"url":"https://baskldjha.com/loaksd","context":"1"}]'
 ```
 
@@ -134,7 +133,7 @@ does not have to wait for the whole check result to complete to render.
 
 In the sample HTTPie request, post the streaming request to the `/checkUrls/stream` route:
 
-```bash
+```shell
 http --stream  POST  localhost:8080/checkUrls/stream ...
 ```
 
@@ -168,13 +167,13 @@ The variables found in the configuration file can be upper-cased and prefixed wi
 
 Arrays of strings can be defined delimited by a space, e.g.:
 
-```
+```shell
 LCS_CORSORIGINS="http://localhost:8080 http://localhost:8092"
 ```
 
 For complex keys, such as `HTTPClient.userAgent`, take the uppercase key and replace the dot with an underscore:
 
-```
+```shell
 LCS_HTTPCLIENT_USERAGENT="lcs/2.0"
 ```
 
@@ -262,7 +261,7 @@ Blocked IPs will run into HTTP 429, and will be unblocked after the sliding wind
 
 `hey -m POST -n 1000 -c 200 -T "application/json" -t 30 -D sample_request_body.json http://localhost:8080/checkUrls` with a limit of `10-S`:
 
-```
+```shell
 Status code distribution:
   [200] 10 responses
   [429] 990 responses
@@ -270,7 +269,6 @@ Status code distribution:
 
 ## Dependencies
 
-- Go (1.19)
 - see [go.mod](go.mod)
 
 ## Alternatives
@@ -278,16 +276,16 @@ Status code distribution:
 the alternatives that are not URL list check web services:
 
 - HTML/Markdown crawlers & checkers
-    - https://github.com/stevenvachon/broken-link-checker
-    - https://github.com/JustinBeckwith/linkinator
-    - https://github.com/bmuschko/link-verifier
-    - https://github.com/raviqqe/liche
-    - https://github.com/raviqqe/muffet
-    - https://github.com/victoriadrake/hydra-link-checker
-    - https://github.com/tcort/markdown-link-check
+  - https://github.com/stevenvachon/broken-link-checker
+  - https://github.com/JustinBeckwith/linkinator
+  - https://github.com/bmuschko/link-verifier
+  - https://github.com/raviqqe/liche
+  - https://github.com/raviqqe/muffet
+  - https://github.com/victoriadrake/hydra-link-checker
+  - https://github.com/tcort/markdown-link-check
 - URL checkers
-    - https://github.com/1ndianl33t/urlprobe
-    - https://github.com/tomnomnom/burl
+  - https://github.com/1ndianl33t/urlprobe
+  - https://github.com/tomnomnom/burl
 
 some URL check services exist, albeit not open source (as of 02.09.2020)
 
