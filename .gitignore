@@ -148,3 +148,4 @@ test/jquery_example/jquery_example
 test/large_list_check/large_list_check
 *.pem
 .DS_Store
+*.log

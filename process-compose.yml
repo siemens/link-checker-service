@@ -1,0 +1,16 @@
+version: "0.5"
+
+# https://f1bonacc1.github.io/process-compose/
+# process-compose --no-server
+
+log_location: processes.log
+log_level: debug
+
+processes:
+  service:
+    command: "go run . serve --config .link-checker-service.toml"
+    working_dir: "."
+
+  ui:
+    command: "go run ."
+    working_dir: "./test/jquery_example"

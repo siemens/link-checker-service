@@ -15,21 +15,9 @@ Routes:
 
 ## Quickstart Options
 
-- get the binary into `$GOPATH/bin`
+### In Docker
 
-```shell
-go get -u github.com/siemens/link-checker-service
-```
-
-&darr;
-
-```shell
-link-checker-service serve
-```
-
-- download it from the [releases](https://github.com/siemens/link-checker-service/releases/latest)
-
-- run the service dockerized, without installing Go, and navigate to the [sample UI](http://localhost:8092):
+run the service dockerized, without installing Go, and navigate to the [sample UI](http://localhost:8092):
 
 building from scratch:
 
@@ -45,11 +33,38 @@ docker-compose up
 
 replace the image tag in [docker-compose.yml](docker-compose.yml) if necessary
 
-- run from source:
+### From Source
+
+only the service:
 
 ```shell
 go run . serve
 ```
+
+run the service and the [sample UI](http://localhost:8092) via [process-compose](https://f1bonacc1.github.io/process-compose/)
+at the same time:
+
+```shell
+process-compose --no-server
+```
+
+note the `--no-server` flag, as `process-compose` starts a server on port `8080` by default.
+
+### Binaries
+
+- get the binary into `$GOPATH/bin`
+
+```shell
+go get -u github.com/siemens/link-checker-service
+```
+
+&darr;
+
+```shell
+link-checker-service serve
+```
+
+- download it from the [releases](https://github.com/siemens/link-checker-service/releases/latest)
 
 ## Motivation
 
