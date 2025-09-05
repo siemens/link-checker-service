@@ -79,6 +79,7 @@ Status code distribution:
   - update [CHANGES.md](CHANGES.md)
   - `go fmt ./...`
   - test (`go test ./...`)
-  - `git tag v<version> -m 'v<version>'`
-  - `git push origin v<version>`
+  - `export version="v<version>"`
+  - `git tag $version -m $version`
+  - `git push origin $version`
   - make sure the release has a comment: `see [CHANGES](CHANGES.md)`
