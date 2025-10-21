@@ -1,6 +1,6 @@
 module github.com/siemens/link-checker-service/test/large_list_check
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.1
 
@@ -10,4 +10,4 @@ require (
 	mvdan.cc/xurls/v2 v2.6.0
 )
 
-require golang.org/x/net v0.43.0 // indirect
+require golang.org/x/net v0.46.0 // indirect
