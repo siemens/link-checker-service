@@ -5,6 +5,7 @@ Notable changes will be documented here
 ## 0.9.41
 
 - release more binaries via goreleaser
+- multi-arch images
 - upgraded dependencies
 
 ## 0.9.40
