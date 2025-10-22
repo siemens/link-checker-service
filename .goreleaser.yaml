@@ -64,3 +64,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+release:
+  footer: |
+    ### Changes
+    see [CHANGES](CHANGES.md)
