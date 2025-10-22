@@ -67,5 +67,4 @@ changelog:
 
 release:
   footer: |
-    ### Changes
     see [CHANGES](CHANGES.md)
