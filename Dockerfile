@@ -6,8 +6,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 # now build the whole thing
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go test -v ./...
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o link-checker-service
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go test -v ./...
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -v -o link-checker-service
 RUN ./link-checker-service version
 
 # TLS certificates & user

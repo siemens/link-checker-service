@@ -6,7 +6,7 @@ COPY go.mod ./
 RUN go mod download
 # now build the whole thing
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o sample-ui
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -v -o sample-ui
 
 # user
 FROM alpine:latest as alpine
