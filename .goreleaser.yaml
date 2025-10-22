@@ -1,0 +1,63 @@
+version: 2
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+    - go install mvdan.cc/garble@latest
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - linux
+      - darwin
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/siemens/link-checker-service/infrastructure.Version={{.Version}}
+    hooks:
+      pre:
+        - garble -tiny -literals -seed=random build
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README*
+      - LICENSE*
+      - CHANGELOG*
+    formats:
+      - tar.gz
+      - zip
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+      - goos: linux
+        formats:
+          - tar.gz
+      - goos: darwin
+        formats:
+          - tar.gz
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: git
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
