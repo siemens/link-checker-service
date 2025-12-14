@@ -145,10 +145,17 @@ func TestCheckerSequenceMatters(t *testing.T) {
 }
 
 func TestResponseTimeout(t *testing.T) {
+	// Create a local test server that delays for 3 seconds
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(3 * time.Second)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
 	setUpViperTestConfiguration()
 	viper.Set("HTTPClient.timeoutSeconds", uint(1))
 	start := time.Now()
-	res := NewURLCheckerClient().CheckURL(context.Background(), "https://httpbin.org/delay/3")
+	res := NewURLCheckerClient().CheckURL(context.Background(), ts.URL)
 	elapsed := time.Since(start)
 	assert.True(t, elapsed < 3*time.Second, "the response should have been aborted after one second")
 	assert.Greater(t, res.ElapsedMs, int64(1000), "at least 1 second must have passed")
