@@ -69,22 +69,21 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	registerRootPersistentFlags()
+	SetUpViper()
+}
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
+func defaultConfigHome() string {
 	home := "$HOME"
-
 	if homeString, err := homedir.Dir(); err == nil {
 		if expandedHomeString, err := homedir.Expand(homeString); err == nil {
 			home = expandedHomeString
 		}
 	}
+	return home
+}
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is "+filepath.Join(home, ".link-checker-service.toml)"))
-
-	// HTTP client
+func registerHTTPClientPersistentFlags() {
 	rootCmd.PersistentFlags().StringP(proxyKey, "", "", "HTTP client: proxy server to use, e.g. http://myproxy:8080")
 	_ = viper.BindPFlag(proxyKey, rootCmd.PersistentFlags().Lookup(proxyKey))
 	rootCmd.PersistentFlags().StringP(pacScriptURLKey, "", "", "HTTP client: PAC script URL, e.g. http://myproxy/proxy.pac")
@@ -106,11 +105,9 @@ func init() {
 	_ = viper.BindPFlag(httpClientMapKey+enableRequestTracingKey, rootCmd.PersistentFlags().Lookup(enableRequestTracingKey))
 	rootCmd.PersistentFlags().Uint(limitBodyToNBytesKey, 0, "HTTP client: maximum number of bytes to read from the body when searching for patterns. Unlimited if 0!")
 	_ = viper.BindPFlag(httpClientMapKey+limitBodyToNBytesKey, rootCmd.PersistentFlags().Lookup(limitBodyToNBytesKey))
-	// service
-	rootCmd.PersistentFlags().UintP(maxConcurrentHTTPRequestsKey, "c", 256, "maximum number of total concurrent HTTP requests")
-	_ = viper.BindPFlag(maxConcurrentHTTPRequestsKey, rootCmd.PersistentFlags().Lookup(maxConcurrentHTTPRequestsKey))
+}
 
-	// cache
+func registerCachePersistentFlags() {
 	rootCmd.PersistentFlags().String(cacheExpirationIntervalKey, "24h", "Expire each URL check result after <interval> (in ns/us/ms/s/m/h)")
 	_ = viper.BindPFlag(cacheExpirationIntervalKey, rootCmd.PersistentFlags().Lookup(cacheExpirationIntervalKey))
 	rootCmd.PersistentFlags().String(cacheCleanupIntervalKey, "48h", "Interval between cache cleanups (in ns/us/ms/s/m/h)")
@@ -121,6 +118,11 @@ func init() {
 	_ = viper.BindPFlag(cacheMaxSizeKey, rootCmd.PersistentFlags().Lookup(cacheMaxSizeKey))
 	rootCmd.PersistentFlags().Int64(cacheNumCountersKey, 10_000_000, "Number of 4-bit access counters. Set at approx 10x max unique expected URLs (when cacheUseRistretto enabled)")
 	_ = viper.BindPFlag(cacheNumCountersKey, rootCmd.PersistentFlags().Lookup(cacheNumCountersKey))
+}
+
+func registerServicePersistentFlags() {
+	rootCmd.PersistentFlags().UintP(maxConcurrentHTTPRequestsKey, "c", 256, "maximum number of total concurrent HTTP requests")
+	_ = viper.BindPFlag(maxConcurrentHTTPRequestsKey, rootCmd.PersistentFlags().Lookup(maxConcurrentHTTPRequestsKey))
 
 	rootCmd.PersistentFlags().String(retryFailedAfterKey, "30s", "If a URL check failed, e.g. intermittently, re-run it after <interval>  (in ns/us/ms/s/m/h)")
 	_ = viper.BindPFlag(retryFailedAfterKey, rootCmd.PersistentFlags().Lookup(retryFailedAfterKey))
@@ -137,12 +139,14 @@ func init() {
 	rootCmd.PersistentFlags().StringSliceP(urlCheckerPluginsKey, "p", []string{"urlcheck"},
 		"provide a list of URL checkers. Additionally, 'urlcheck-noproxy' can be used if a proxy is defined, and an additional check without a proxy makes sense. The argument sequence is the checker sequence.")
 	_ = viper.BindPFlag(urlCheckerPluginsKey, rootCmd.PersistentFlags().Lookup(urlCheckerPluginsKey))
+}
 
-	SetUpViper()
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func registerRootPersistentFlags() {
+	home := defaultConfigHome()
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is "+filepath.Join(home, ".link-checker-service.toml)"))
+	registerHTTPClientPersistentFlags()
+	registerCachePersistentFlags()
+	registerServicePersistentFlags()
 }
 
 // SetUpViper configures environment variable and global flag handling

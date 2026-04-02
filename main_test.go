@@ -515,6 +515,17 @@ func TestEmptyRequestsShouldFail(t *testing.T) {
 	assert.Contains(t, strings.ToLower(body), "no")
 }
 
+func TestCloseNotifyRecorder_closeSignalsChannel(t *testing.T) {
+	w := newCloseNotifyRecorder()
+	w.close()
+	select {
+	case v := <-w.CloseNotify():
+		assert.True(t, v)
+	case <-time.After(time.Second):
+		t.Fatal("expected CloseNotify to receive after close()")
+	}
+}
+
 func TestStreamingResponse(t *testing.T) {
 	setUpViperTestConfiguration()
 	testServer := server.NewServer()

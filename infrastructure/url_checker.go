@@ -85,12 +85,10 @@ type URLChecker interface {
 
 // URLCheckerClient contains the HTTP/URL checking logic
 type URLCheckerClient struct {
-	client             *resty.Client
-	clientWithoutProxy *resty.Client
-	settings           urlCheckerSettings
-	dnsCache           *cache.Cache
-	checkerPlugins     []URLCheckerPlugin
-	autoProxy          *gpac.Parser
+	settings       urlCheckerSettings
+	dnsCache       *cache.Cache
+	checkerPlugins []URLCheckerPlugin
+	autoProxy      *gpac.Parser
 }
 
 // NewURLCheckerClient instantiates a new basic URL checking client
@@ -106,69 +104,7 @@ func NewURLCheckerClient() *URLCheckerClient {
 		c.autoProxy = parsePacScript(c.settings.PacScriptURL)
 	}
 
-	var checkers []URLCheckerPlugin
-
-	// for now, a valid checker may be configured twice, for whatever reason
-	for _, checkerName := range c.settings.URLCheckerPlugins {
-		switch checkerName {
-		case "urlcheck":
-			// default client
-			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck", buildClient(urlCheckerSettings)))
-			log.Info().Msg("Added the defaut URL checker")
-		case "urlcheck-pac":
-			if c.settings.PacScriptURL == "" {
-				panic("Cannot instantiate a 'urlcheck-pac' checker without a proxy auto-config script configured")
-			}
-			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
-			log.Info().Msg("Added the PAC file based URL checker")
-		case "urlcheck-noproxy":
-			// if proxy is defined, add one without the proxy as fallback
-			if urlCheckerSettings.ProxyURL == "" {
-				panic("No point in adding a 'urlcheck-noproxy' checker, as no proxy URL is defined")
-			}
-
-			urlCheckerSettingsNoProxy := urlCheckerSettings
-			urlCheckerSettingsNoProxy.ProxyURL = ""
-			checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-noproxy", buildClient(urlCheckerSettingsNoProxy)))
-			log.Info().Msg("Added the URL checker that doesn't use a proxy")
-		case "_ok_after_1s_on_delay.com":
-			// fake client for testing
-			checkers = addChecker(checkers, &fakeURLChecker{1 * time.Second, &URLCheckResult{
-				Status:                Ok,
-				Code:                  http.StatusOK,
-				Error:                 nil,
-				FetchedAtEpochSeconds: 0,
-				BodyPatternsFound:     nil,
-				RemoteAddr:            "",
-			}, "_ok_after_1s_on_delay.com"})
-			log.Info().Msg("Added the _always_ok checker")
-		case "_always_ok":
-			// fake client for testing
-			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
-				Status:                Ok,
-				Code:                  http.StatusOK,
-				Error:                 nil,
-				FetchedAtEpochSeconds: 0,
-				BodyPatternsFound:     nil,
-				RemoteAddr:            "",
-			}, "_always_ok"})
-			log.Info().Msg("Added the _always_ok checker")
-		case "_always_bad":
-			// fake client for testing
-			checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
-				Status:                Broken,
-				Code:                  http.StatusInternalServerError,
-				Error:                 fmt.Errorf("bad"),
-				FetchedAtEpochSeconds: 0,
-				BodyPatternsFound:     nil,
-				RemoteAddr:            "",
-			}, "_always_bad"})
-			log.Info().Msg("Added the _always_bad checker")
-		default:
-			panic(fmt.Errorf("unknown checker: %v", checkerName))
-		}
-	}
-
+	checkers := buildCheckerPlugins(c, urlCheckerSettings)
 	if len(checkers) == 0 {
 		panic("Found no checker plugins. Please define one using '-p'")
 	}
@@ -176,6 +112,84 @@ func NewURLCheckerClient() *URLCheckerClient {
 	c.checkerPlugins = checkers
 
 	return c
+}
+
+func buildCheckerPlugins(c *URLCheckerClient, urlCheckerSettings urlCheckerSettings) []URLCheckerPlugin {
+	var checkers []URLCheckerPlugin
+	for _, checkerName := range c.settings.URLCheckerPlugins {
+		checkers = appendConfiguredChecker(checkers, c, checkerName, urlCheckerSettings)
+	}
+	return checkers
+}
+
+func appendConfiguredChecker(checkers []URLCheckerPlugin, c *URLCheckerClient, checkerName string, urlCheckerSettings urlCheckerSettings) []URLCheckerPlugin {
+	switch checkerName {
+	case "urlcheck", "urlcheck-pac", "urlcheck-noproxy":
+		return appendHTTPCheckerPlugin(checkers, c, checkerName, urlCheckerSettings)
+	case "_ok_after_1s_on_delay.com", "_always_ok", "_always_bad":
+		return appendTestDoubleCheckerPlugin(checkers, checkerName)
+	default:
+		panic(fmt.Errorf("unknown checker: %v", checkerName))
+	}
+}
+
+func appendHTTPCheckerPlugin(checkers []URLCheckerPlugin, c *URLCheckerClient, checkerName string, urlCheckerSettings urlCheckerSettings) []URLCheckerPlugin {
+	switch checkerName {
+	case "urlcheck":
+		checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck", buildClient(urlCheckerSettings)))
+		log.Info().Msg("Added the defaut URL checker")
+	case "urlcheck-pac":
+		if c.settings.PacScriptURL == "" {
+			panic("Cannot instantiate a 'urlcheck-pac' checker without a proxy auto-config script configured")
+		}
+		checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
+		log.Info().Msg("Added the PAC file based URL checker")
+	case "urlcheck-noproxy":
+		if urlCheckerSettings.ProxyURL == "" {
+			panic("No point in adding a 'urlcheck-noproxy' checker, as no proxy URL is defined")
+		}
+		urlCheckerSettingsNoProxy := urlCheckerSettings
+		urlCheckerSettingsNoProxy.ProxyURL = ""
+		checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-noproxy", buildClient(urlCheckerSettingsNoProxy)))
+		log.Info().Msg("Added the URL checker that doesn't use a proxy")
+	}
+	return checkers
+}
+
+func appendTestDoubleCheckerPlugin(checkers []URLCheckerPlugin, checkerName string) []URLCheckerPlugin {
+	switch checkerName {
+	case "_ok_after_1s_on_delay.com":
+		checkers = addChecker(checkers, &fakeURLChecker{1 * time.Second, &URLCheckResult{
+			Status:                Ok,
+			Code:                  http.StatusOK,
+			Error:                 nil,
+			FetchedAtEpochSeconds: 0,
+			BodyPatternsFound:     nil,
+			RemoteAddr:            "",
+		}, "_ok_after_1s_on_delay.com"})
+		log.Info().Msg("Added the _always_ok checker")
+	case "_always_ok":
+		checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
+			Status:                Ok,
+			Code:                  http.StatusOK,
+			Error:                 nil,
+			FetchedAtEpochSeconds: 0,
+			BodyPatternsFound:     nil,
+			RemoteAddr:            "",
+		}, "_always_ok"})
+		log.Info().Msg("Added the _always_ok checker")
+	case "_always_bad":
+		checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
+			Status:                Broken,
+			Code:                  http.StatusInternalServerError,
+			Error:                 fmt.Errorf("bad"),
+			FetchedAtEpochSeconds: 0,
+			BodyPatternsFound:     nil,
+			RemoteAddr:            "",
+		}, "_always_bad"})
+		log.Info().Msg("Added the _always_bad checker")
+	}
+	return checkers
 }
 
 func parsePacScript(scriptURL string) *gpac.Parser {
@@ -199,8 +213,8 @@ func addChecker(checkers []URLCheckerPlugin, plugin URLCheckerPlugin) []URLCheck
 	return checkers
 }
 
-func getURLCheckerSettings() urlCheckerSettings {
-	s := urlCheckerSettings{
+func defaultURLCheckerSettings() urlCheckerSettings {
+	return urlCheckerSettings{
 		ProxyURL:          "",
 		MaxRedirectsCount: defaultMaxRedirectsCount, /*will be overwritten via the cobra default value*/
 		TimeoutSeconds:    defaultTimeoutSeconds,    /*will be overwritten via the cobra default value*/
@@ -209,7 +223,9 @@ func getURLCheckerSettings() urlCheckerSettings {
 		AcceptHeader:      defaultAcceptHeader,
 		LimitBodyToNBytes: defaultLimitBodyToNBytes,
 	}
+}
 
+func applyProxyAndPacFromViper(s *urlCheckerSettings) {
 	if proxyURL := viper.GetString("proxy"); proxyURL != "" {
 		_, err := netUrl.Parse(proxyURL)
 		if err != nil {
@@ -219,11 +235,12 @@ func getURLCheckerSettings() urlCheckerSettings {
 			s.ProxyURL = proxyURL
 		}
 	}
-
 	if pacScriptURL := viper.GetString("pacScriptURL"); pacScriptURL != "" {
 		s.PacScriptURL = pacScriptURL
 	}
+}
 
+func applyHTTPClientFieldsFromViper(s *urlCheckerSettings) {
 	s.MaxRedirectsCount = viper.GetUint("HTTPClient.maxRedirectsCount")
 	s.LimitBodyToNBytes = viper.GetUint("HTTPClient.limitBodyToNBytes")
 	s.TimeoutSeconds = viper.GetUint("HTTPClient.timeoutSeconds")
@@ -238,7 +255,9 @@ func getURLCheckerSettings() urlCheckerSettings {
 	}
 	s.SkipCertificateCheck = viper.GetBool("HTTPClient.skipCertificateCheck")
 	s.EnableRequestTracing = viper.GetBool("HTTPClient.enableRequestTracing")
+}
 
+func logURLCheckerHTTPSettings(s urlCheckerSettings) {
 	log.Info().Msgf("HTTP client MaxRedirectsCount: %v", s.MaxRedirectsCount)
 	log.Info().Msgf("HTTP client TimeoutSeconds: %v", s.TimeoutSeconds)
 	log.Info().Msgf("HTTP client UserAgent: %v", s.UserAgent)
@@ -247,35 +266,46 @@ func getURLCheckerSettings() urlCheckerSettings {
 	log.Info().Msgf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
 	log.Info().Msgf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
 	log.Info().Msgf("HTTP client LimitBodyToNBytes: %v", s.LimitBodyToNBytes)
+}
 
-	// advanced configuration feature: only configurable via the config file
-	s.SearchForBodyPatterns = viper.GetBool("searchForBodyPatterns")
-
-	if s.SearchForBodyPatterns {
-		log.Info().Msg("Will search for regex patterns found in HTTP response bodies")
-		var configBodyPatterns []BodyPatternConfig
-		// advanced configuration feature: only configurable via the config file
-		if err := viper.UnmarshalKey("bodyPatterns", &configBodyPatterns); err == nil {
-			for _, pattern := range configBodyPatterns {
-				r := regexp.MustCompile(pattern.Regex)
-				s.BodyPatterns = append(s.BodyPatterns, bodyPattern{
-					name:    pattern.Name,
-					pattern: r,
-				})
-				log.Info().Msgf("Body search pattern found. Name: '%v', Regex: '%v'", pattern.Name, pattern.Regex)
-			}
-		}
+func loadBodyPatternsFromViper(s *urlCheckerSettings) {
+	if !s.SearchForBodyPatterns {
+		return
 	}
+	log.Info().Msg("Will search for regex patterns found in HTTP response bodies")
+	var configBodyPatterns []BodyPatternConfig
+	if err := viper.UnmarshalKey("bodyPatterns", &configBodyPatterns); err != nil {
+		return
+	}
+	for _, pattern := range configBodyPatterns {
+		r := regexp.MustCompile(pattern.Regex)
+		s.BodyPatterns = append(s.BodyPatterns, bodyPattern{
+			name:    pattern.Name,
+			pattern: r,
+		})
+		log.Info().Msgf("Body search pattern found. Name: '%v', Regex: '%v'", pattern.Name, pattern.Regex)
+	}
+}
 
+func urlCheckerPluginsFromViper() []string {
 	urlCheckerPlugins := []string{"urlcheck"}
 	const urlCheckerPluginsKey = "urlCheckerPlugins"
 	g := viper.GetStringSlice(urlCheckerPluginsKey)
 	// empty string slice config creates a single slice with a "[]" -> fix
-	if g != nil && !(len(g) == 1 && g[0] == "[]") && len(g) > 0 {
+	if len(g) > 0 && (len(g) != 1 || g[0] != "[]") {
 		urlCheckerPlugins = viper.GetStringSlice(urlCheckerPluginsKey)
 	}
-	s.URLCheckerPlugins = urlCheckerPlugins
+	return urlCheckerPlugins
+}
 
+func getURLCheckerSettings() urlCheckerSettings {
+	s := defaultURLCheckerSettings()
+	applyProxyAndPacFromViper(&s)
+	applyHTTPClientFieldsFromViper(&s)
+	logURLCheckerHTTPSettings(s)
+	s.SearchForBodyPatterns = viper.GetBool("searchForBodyPatterns")
+	loadBodyPatternsFromViper(&s)
+	s.URLCheckerPlugins = urlCheckerPluginsFromViper()
 	return s
 }
 
@@ -557,13 +587,15 @@ func (c *URLCheckerClient) cachedRemoteAddr(addrToResolve string) string {
 	remoteAddr := ""
 
 	if resolved, found := c.dnsCache.Get(addrToResolve); found {
-		remoteAddr = resolved.(string)
+		if s, ok := resolved.(string); ok {
+			remoteAddr = s
+		}
 	}
 	return remoteAddr
 }
 
 func getDNSAddressesAsString(addresses []net.IPAddr) string {
-	var addr []string
+	addr := make([]string, 0, len(addresses))
 	for _, a := range addresses {
 		addr = append(addr, a.String())
 	}
@@ -571,43 +603,48 @@ func getDNSAddressesAsString(addresses []net.IPAddr) string {
 	return strings.Join(addr, ", ")
 }
 
+func interpretOkDespiteHeadTransportError(err error, response *resty.Response, nowEpoch int64) *URLCheckResult {
+	if err == nil || response == nil || response.RawResponse == nil || response.RawResponse.StatusCode != http.StatusOK {
+		return nil
+	}
+	return &URLCheckResult{
+		Status:                Ok,
+		Code:                  http.StatusOK,
+		FetchedAtEpochSeconds: nowEpoch,
+		BodyPatternsFound:     []string{},
+	}
+}
+
+func brokenResultFromRequestFailure(err error, nowEpoch int64) *URLCheckResult {
+	code := CustomHTTPErrorCode /*as there's no available status in this case*/
+	msg := "no error specified"
+	if err != nil {
+		msg = strings.ToLower(err.Error())
+	}
+	if strings.Contains(msg, "bad gateway") ||
+		strings.Contains(msg, "timeout") ||
+		strings.Contains(msg, "deadline") {
+		code = http.StatusBadGateway
+	}
+	return &URLCheckResult{
+		Status:                Broken,
+		Code:                  code,
+		Error:                 err,
+		FetchedAtEpochSeconds: nowEpoch,
+		BodyPatternsFound:     []string{},
+	}
+}
+
 func (c *URLCheckerClient) processResponse(url string, response *resty.Response, err error) *URLCheckResult {
 	nowEpoch := time.Now().Unix()
 
 	// some browser-optimized cache-controlled CDN sites return an empty body if browser doesn't re-request
-	if /*errored*/ err != nil &&
-		/*but there's a response*/ response != nil && response.RawResponse != nil &&
-		/*and the response is ok*/ response.RawResponse.StatusCode == http.StatusOK {
-
-		// then, interpret the result as ok
-		return &URLCheckResult{
-			Status:                Ok,
-			Code:                  http.StatusOK,
-			FetchedAtEpochSeconds: nowEpoch,
-			BodyPatternsFound:     []string{},
-		}
+	if res := interpretOkDespiteHeadTransportError(err, response, nowEpoch); res != nil {
+		return res
 	}
 
 	if err != nil || response == nil {
-		code := CustomHTTPErrorCode /*as there's no available status in this case*/
-		msg := "no error specified"
-		if err != nil {
-			msg = strings.ToLower(err.Error())
-		}
-
-		// proxies can misbehave. classify them as "bad gateway"
-		if strings.Contains(msg, "bad gateway") ||
-			strings.Contains(msg, "timeout") ||
-			strings.Contains(msg, "deadline") {
-			code = http.StatusBadGateway
-		}
-		return &URLCheckResult{
-			Status:                Broken,
-			Code:                  code,
-			Error:                 err,
-			FetchedAtEpochSeconds: nowEpoch,
-			BodyPatternsFound:     []string{},
-		}
+		return brokenResultFromRequestFailure(err, nowEpoch)
 	}
 
 	statusCode := response.StatusCode()
@@ -657,7 +694,7 @@ func (c *URLCheckerClient) limitedBody(response *resty.Response) string {
 	if body == nil {
 		return ""
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	return safelyTrimmedStream(body, c.settings.LimitBodyToNBytes)
 }
 

@@ -244,7 +244,9 @@ func (s *Server) checkURLsStream(c *gin.Context) {
 			for _, duplicatedURLStatus := range urls.deduplicatedResultFor(urlStatus) {
 				c.JSON(http.StatusOK, duplicatedURLStatus)
 				c.String(http.StatusOK, "\n")
-				c.Writer.(http.Flusher).Flush()
+				if flusher, ok := c.Writer.(http.Flusher); ok {
+					flusher.Flush()
+				}
 			}
 			return true
 
@@ -281,7 +283,7 @@ func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context, stream bool) (Check
 }
 
 func (s *Server) setUpCORS() {
-	if s.options.CORSOrigins != nil && len(s.options.CORSOrigins) > 0 {
+	if len(s.options.CORSOrigins) > 0 {
 		corsConfig := cors.DefaultConfig()
 		corsConfig.AllowOrigins = s.options.CORSOrigins
 		corsConfig.AllowMethods = []string{"POST", "GET", "OPTIONS"}
@@ -350,7 +352,7 @@ func (s *Server) checkURL(ctx context.Context, url URLRequest) URLStatusResponse
 }
 
 func translateCheckerTrace(trace []infrastructure.URLCheckerPluginTrace) []URLCheckTraceResponse {
-	var res []URLCheckTraceResponse
+	res := make([]URLCheckTraceResponse, 0, len(trace))
 	for _, traceRes := range trace {
 		res = append(res, URLCheckTraceResponse{
 			Name:      traceRes.Name,

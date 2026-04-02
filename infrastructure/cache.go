@@ -50,7 +50,9 @@ func (c defaultCache) Get(url string) (*URLCheckResult, bool) {
 	value, found := c.cache.Get(url)
 
 	if found {
-		return value.(*URLCheckResult), true
+		if v, ok := value.(*URLCheckResult); ok {
+			return v, true
+		}
 	}
 
 	return nil, false

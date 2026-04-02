@@ -13,35 +13,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDeduplicator(t *testing.T) {
-	request := []URLRequest{
-		{
-			Context: "0",
-			URL:     "http://a",
-		},
-		{
-			Context: "1",
-			URL:     "b",
-		},
-		{
-			Context: "2",
-			URL:     "http://a ",
-		},
-		{
-			Context: "3",
-			URL:     "b",
-		},
-		{
-			Context: "4",
-			URL:     " http://a",
-		},
+func deduplicatorTestRequest() []URLRequest {
+	return []URLRequest{
+		{Context: "0", URL: "http://a"},
+		{Context: "1", URL: "b"},
+		{Context: "2", URL: "http://a "},
+		{Context: "3", URL: "b"},
+		{Context: "4", URL: " http://a"},
 	}
+}
+
+func TestDeduplicator_groupsURLsByNormalizedKey(t *testing.T) {
+	request := deduplicatorTestRequest()
 	urls := deduplicateURLs(request)
 
-	// checking internals for sanity
 	assert.Len(t, urls.toCheck, 2)
-	assert.Len(t, urls.toDuplicate, 2)             // a and b
-	assert.Len(t, urls.toDuplicate["http://a"], 2) // all duplicate a
+	assert.Len(t, urls.toDuplicate, 2)
+	assert.Len(t, urls.toDuplicate["http://a"], 2)
+}
+
+func TestDeduplicator_expandsCachedResponseAcrossDuplicateURLs(t *testing.T) {
+	request := deduplicatorTestRequest()
+	urls := deduplicateURLs(request)
 
 	aResponse := URLStatusResponse{
 		URLRequest:            request[0],
@@ -51,8 +44,6 @@ func TestDeduplicator(t *testing.T) {
 		FetchedAtEpochSeconds: 0,
 		BodyPatternsFound:     []string{"a"},
 	}
-
-	// simulate an existing result for a
 	urls.onResponse(&aResponse)
 
 	a := urls.allResultsDeduplicated([]URLStatusResponse{aResponse})
@@ -63,6 +54,21 @@ func TestDeduplicator(t *testing.T) {
 	assert.Equal(t, a[1], aResponse2, "duplicated result should have contained a response with the original url & context")
 	a = urls.deduplicatedResultFor(aResponse)
 	assert.Len(t, a, 3, "should have returned a duplicated a result")
+}
+
+func TestDeduplicator_mergesDistinctURLsWhenBothCached(t *testing.T) {
+	request := deduplicatorTestRequest()
+	urls := deduplicateURLs(request)
+
+	aResponse := URLStatusResponse{
+		URLRequest:            request[0],
+		Status:                "ok",
+		HTTPStatus:            infrastructure.CustomHTTPErrorCode,
+		Error:                 "error!",
+		FetchedAtEpochSeconds: 0,
+		BodyPatternsFound:     []string{"a"},
+	}
+	urls.onResponse(&aResponse)
 
 	bResponse := aResponse
 	bResponse.URLRequest = request[1]

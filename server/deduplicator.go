@@ -69,7 +69,10 @@ func (urls *deduplicator) addResponseIfCached(u URLRequest, res []URLStatusRespo
 	key := normalizedURL(u.URL)
 
 	if cached, ok := urls.responseCache.Load(key); ok && cached != nil {
-		response := cached.(*URLStatusResponse)
+		response, typeOK := cached.(*URLStatusResponse)
+		if !typeOK {
+			return res
+		}
 		// copy
 		var newResponse = *response
 		// replace the request context & url to the original of the request

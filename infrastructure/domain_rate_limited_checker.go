@@ -49,7 +49,13 @@ func (c *DomainRateLimitedChecker) CheckURL(ctx context.Context, url string) *UR
 	if limiterInstance, ok := c.domains.Load(key); !ok {
 		limiter = rate.NewLimiter(c.ratePerSecond /*per second*/, 1 /*burst*/)
 	} else {
-		limiter = limiterInstance.(*rate.Limiter)
+		l, typeOK := limiterInstance.(*rate.Limiter)
+		if !typeOK {
+			limiter = rate.NewLimiter(c.ratePerSecond, 1)
+			c.domains.Store(key, limiter)
+		} else {
+			limiter = l
+		}
 	}
 	if err := limiter.Wait(ctx); err != nil {
 		nowEpoch := time.Now().Unix()
@@ -58,7 +64,7 @@ func (c *DomainRateLimitedChecker) CheckURL(ctx context.Context, url string) *UR
 		return &URLCheckResult{
 			Status:                Dropped,
 			Code:                  CustomHTTPErrorCode,
-			Error:                 fmt.Errorf("domain rate limiter aborted: %v", err),
+			Error:                 fmt.Errorf("domain rate limiter aborted: %w", err),
 			FetchedAtEpochSeconds: nowEpoch,
 			BodyPatternsFound:     []string{},
 		}

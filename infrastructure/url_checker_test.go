@@ -215,7 +215,7 @@ func Test_safelyTrimmedStream(t *testing.T) {
 			assert.Equal(t, 1, len(safelyTrimmedStream(streamOf(testStringToLimit), 1)))
 		})
 
-	t.Run("limiting input larger than the the buffer (1kB) to a limit larger than the buffer trims the input",
+	t.Run("limiting input larger than the buffer (1kB) to a limit larger than the buffer trims the input",
 		func(t *testing.T) {
 			assert.Equal(t, 1200, len(safelyTrimmedStream(streamOf(
 				strings.Repeat(testStringToLimit, 2),

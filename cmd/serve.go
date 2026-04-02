@@ -69,7 +69,7 @@ func fetchConfig() {
 	if viper.Get(domainBlacklistGlobsKey) != nil {
 		g := viper.GetStringSlice(domainBlacklistGlobsKey)
 		// empty string slice config creates a single slice with a "[]" -> fix
-		if g != nil && !(len(g) == 1 && g[0] == "[]") {
+		if g != nil && (len(g) != 1 || g[0] != "[]") {
 			domainBlacklistGlobs = viper.GetStringSlice(domainBlacklistGlobsKey)
 		}
 	}
