@@ -150,3 +150,4 @@ test/large_list_check/large_list_check
 .DS_Store
 *.log
 dist/
+report/*.json
