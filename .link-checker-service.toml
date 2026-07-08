@@ -97,3 +97,18 @@ acceptHeader = "*/*"
 skipCertificateCheck = false
 # this will fill out the URL response's remote_addr field when available
 enableRequestTracing = false
+
+# Uncomment to enable browser-like TLS cipher/curve preferences + HTTP headers.
+# This sets Go's crypto/tls to use browser-ordered cipher suites and curves,
+# bringing the TLS ClientHello closer to a real browser (not a full fingerprint
+# match — for exact JA3/JA4 matching a crypto/tls fork like utls would be needed).
+# Valid profiles: "chrome", "firefox", "safari".
+#
+# Chrome example:
+# impersonateProfile = "chrome"
+#
+# Firefox example:
+# impersonateProfile = "firefox"
+#
+# Safari example:
+# impersonateProfile = "safari"

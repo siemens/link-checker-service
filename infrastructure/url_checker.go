@@ -30,6 +30,8 @@ import (
 	netUrl "net/url"
 
 	"github.com/go-resty/resty/v2"
+
+	"github.com/siemens/link-checker-service/infrastructure/impersonate"
 )
 
 const defaultLimitBodyToNBytes = 0
@@ -83,6 +85,7 @@ type urlCheckerSettings struct {
 	URLCheckerPlugins     []string
 	PacScriptURL          string
 	LimitBodyToNBytes     uint
+	ImpersonateProfile    string
 }
 
 // URLChecker interface that all layers should conform to
@@ -262,6 +265,7 @@ func applyHTTPClientFieldsFromViper(s *urlCheckerSettings) {
 	}
 	s.SkipCertificateCheck = viper.GetBool("HTTPClient.skipCertificateCheck")
 	s.EnableRequestTracing = viper.GetBool("HTTPClient.enableRequestTracing")
+	s.ImpersonateProfile = viper.GetString("HTTPClient.impersonateProfile")
 }
 
 func logURLCheckerHTTPSettings(s urlCheckerSettings) {
@@ -273,6 +277,7 @@ func logURLCheckerHTTPSettings(s urlCheckerSettings) {
 	log.Info().Msgf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
 	log.Info().Msgf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
 	log.Info().Msgf("HTTP client LimitBodyToNBytes: %v", s.LimitBodyToNBytes)
+	log.Info().Msgf("HTTP client ImpersonateProfile: %v", s.ImpersonateProfile)
 }
 
 func loadBodyPatternsFromViper(s *urlCheckerSettings) {
@@ -515,8 +520,16 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 		ctx = httptrace.WithClientTrace(ctx, trace)
 	}
 
-	res := c.tryHeadRequestDefault(ctx, urlToCheck, client)
-	res = c.tryHeadRequestAsBrowserIfForbidden(ctx, urlToCheck, client, res)
+	var res *URLCheckResult
+	if c.settings.ImpersonateProfile != "" {
+		// When impersonating a browser, skip the robot User-Agent attempt.
+		// The transport and client headers already match the target browser.
+		res = c.tryHeadRequestAsBrowser(ctx, urlToCheck, client)
+	} else {
+		// Standard sequence: robot UA first, then browser UA on 403.
+		res = c.tryHeadRequestDefault(ctx, urlToCheck, client)
+		res = c.tryHeadRequestAsBrowserIfForbidden(ctx, urlToCheck, client, res)
+	}
 	res = c.tryGetRequestAndProcessResponseBody(ctx, urlToCheck, client, res)
 
 	res.RemoteAddr = remoteAddr
@@ -683,6 +696,15 @@ func (c *URLCheckerClient) searchForBodyPatterns(res *URLCheckResult, body strin
 	return res
 }
 
+func (c *URLCheckerClient) tryHeadRequestAsBrowser(ctx context.Context, urlToCheck string, client *resty.Client) *URLCheckResult {
+	response, err := client.R().
+		SetHeader("Accept", c.settings.AcceptHeader).
+		SetHeader("User-Agent", c.settings.BrowserUserAgent).
+		SetContext(ctx).
+		Head(urlToCheck)
+	return c.processResponse(urlToCheck, response, err)
+}
+
 func (c *URLCheckerClient) tryHeadRequestAsBrowserIfForbidden(ctx context.Context, urlToCheck string, client *resty.Client, res *URLCheckResult) *URLCheckResult {
 	// Some sites don't allow robot user agents
 	if res.Code == http.StatusForbidden {
@@ -755,9 +777,27 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 	if settings.ProxyURL != "" {
 		client.SetProxy(settings.ProxyURL)
 	}
-	if settings.SkipCertificateCheck {
-		// this is known to be insecure, thus protected via a configuration with a secure default
+
+	skipVerify := settings.SkipCertificateCheck
+
+	if settings.ImpersonateProfile != "" {
+		profile := impersonate.ProfileByName(settings.ImpersonateProfile)
+		transport := impersonate.NewTransport(profile, skipVerify)
+		client.SetTransport(transport)
+
+		// Set browser default headers from the impersonation profile
+		for key, values := range profile.DefaultHeaders {
+			for _, value := range values {
+				client.SetHeader(key, value)
+			}
+		}
+		log.Info().Msgf("HTTP client impersonating as: %v", profile.Name)
+	} else if skipVerify {
+		// Only set custom TLS config when NOT impersonating (impersonation
+		// transport already handles skipVerify). This is known to be insecure,
+		// thus protected via a configuration with a secure default.
 		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	}
+
 	return client
 }
