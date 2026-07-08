@@ -99,26 +99,26 @@ func TestDefaultURLCheckerClientPlugins(t *testing.T) {
 	// the default is a single URL client-based checker
 	setUpViperTestConfiguration()
 	c := NewURLCheckerClient()
-	assert.Equal(t, []string{"urlcheck"}, c.settings.URLCheckerPlugins)
+	assert.Equal(t, []string{checkerPluginURLCheck}, c.settings.URLCheckerPlugins)
 
 	// setting multiple checkers is possible
-	viper.Set("urlCheckerPlugins", []string{"urlcheck", "_always_ok", "urlcheck"})
+	viper.Set("urlCheckerPlugins", []string{checkerPluginURLCheck, checkerPluginAlwaysOK, checkerPluginURLCheck})
 	c = NewURLCheckerClient()
-	assert.Equal(t, []string{"urlcheck", "_always_ok", "urlcheck"}, c.settings.URLCheckerPlugins)
+	assert.Equal(t, []string{checkerPluginURLCheck, checkerPluginAlwaysOK, checkerPluginURLCheck}, c.settings.URLCheckerPlugins)
 
 	// unsetting the proxy disables the ability to add the noproxy client
 	assert.Panics(t, func() {
 		viper.Set("proxy", nil)
-		viper.Set("urlCheckerPlugins", []string{"urlcheck", "urlcheck-noproxy"})
+		viper.Set("urlCheckerPlugins", []string{checkerPluginURLCheck, checkerPluginURLCheckNoProxy})
 		NewURLCheckerClient()
 	})
 
 	// setting the proxy enables adding the noproxy client
 	assert.NotPanics(t, func() {
 		viper.Set("proxy", "http://proxy:1234")
-		viper.Set("urlCheckerPlugins", []string{"urlcheck", "urlcheck-noproxy"})
+		viper.Set("urlCheckerPlugins", []string{checkerPluginURLCheck, checkerPluginURLCheckNoProxy})
 		c = NewURLCheckerClient()
-		assert.Equal(t, []string{"urlcheck", "urlcheck-noproxy"}, c.settings.URLCheckerPlugins)
+		assert.Equal(t, []string{checkerPluginURLCheck, checkerPluginURLCheckNoProxy}, c.settings.URLCheckerPlugins)
 	})
 
 	// adding an unknown checker
@@ -130,18 +130,18 @@ func TestDefaultURLCheckerClientPlugins(t *testing.T) {
 
 func TestCheckerSequenceMatters(t *testing.T) {
 	setUpViperTestConfiguration()
-	viper.Set("urlCheckerPlugins", []string{"_always_ok", "_always_bad"})
+	viper.Set("urlCheckerPlugins", []string{checkerPluginAlwaysOK, checkerPluginAlwaysBad})
 	res := NewURLCheckerClient().CheckURL(context.Background(), "http://lkasdjfasf.com/123987")
 	assert.Equal(t, Ok, res.Status, "the result should've been Ok as _always_ok comes first and aborts the chain")
 	assert.Equal(t, []URLCheckerPluginTrace{
-		{Name: "_always_ok", Code: 200},
+		{Name: checkerPluginAlwaysOK, Code: 200},
 	}, res.CheckerTrace)
 
-	viper.Set("urlCheckerPlugins", []string{"_always_bad", "_always_ok"})
+	viper.Set("urlCheckerPlugins", []string{checkerPluginAlwaysBad, checkerPluginAlwaysOK})
 	res = NewURLCheckerClient().CheckURL(context.Background(), "http://lkasdjfasf.com/123987")
 	assert.NotEqual(t, Ok, res.Status, "the result should not have been Ok as _always_bad comes first and aborts the chain")
 	assert.Len(t, res.CheckerTrace, 1)
-	assert.Equal(t, "_always_bad", res.CheckerTrace[0].Name)
+	assert.Equal(t, checkerPluginAlwaysBad, res.CheckerTrace[0].Name)
 }
 
 func TestResponseTimeout(t *testing.T) {

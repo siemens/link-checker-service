@@ -39,6 +39,13 @@ const defaultUserAgent = "lcs/0.9"
 const defaultBrowserUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36"
 const defaultAcceptHeader = "*/*"
 
+const checkerPluginURLCheck = "urlcheck"
+const checkerPluginURLCheckPAC = "urlcheck-pac"
+const checkerPluginURLCheckNoProxy = "urlcheck-noproxy"
+const checkerPluginOKAfterDelay = "_ok_after_1s_on_delay.com"
+const checkerPluginAlwaysOK = "_always_ok"
+const checkerPluginAlwaysBad = "_always_bad"
+
 // URLCheckResult is the internal struct to hold URL check results
 type URLCheckResult struct {
 	Status                URLCheckStatus
@@ -124,9 +131,9 @@ func buildCheckerPlugins(c *URLCheckerClient, urlCheckerSettings urlCheckerSetti
 
 func appendConfiguredChecker(checkers []URLCheckerPlugin, c *URLCheckerClient, checkerName string, urlCheckerSettings urlCheckerSettings) []URLCheckerPlugin {
 	switch checkerName {
-	case "urlcheck", "urlcheck-pac", "urlcheck-noproxy":
+	case checkerPluginURLCheck, checkerPluginURLCheckPAC, checkerPluginURLCheckNoProxy:
 		return appendHTTPCheckerPlugin(checkers, c, checkerName, urlCheckerSettings)
-	case "_ok_after_1s_on_delay.com", "_always_ok", "_always_bad":
+	case checkerPluginOKAfterDelay, checkerPluginAlwaysOK, checkerPluginAlwaysBad:
 		return appendTestDoubleCheckerPlugin(checkers, checkerName)
 	default:
 		panic(fmt.Errorf("unknown checker: %v", checkerName))
@@ -135,22 +142,22 @@ func appendConfiguredChecker(checkers []URLCheckerPlugin, c *URLCheckerClient, c
 
 func appendHTTPCheckerPlugin(checkers []URLCheckerPlugin, c *URLCheckerClient, checkerName string, urlCheckerSettings urlCheckerSettings) []URLCheckerPlugin {
 	switch checkerName {
-	case "urlcheck":
-		checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck", buildClient(urlCheckerSettings)))
+	case checkerPluginURLCheck:
+		checkers = addChecker(checkers, newLocalURLChecker(c, checkerPluginURLCheck, buildClient(urlCheckerSettings)))
 		log.Info().Msg("Added the defaut URL checker")
-	case "urlcheck-pac":
+	case checkerPluginURLCheckPAC:
 		if c.settings.PacScriptURL == "" {
 			panic("Cannot instantiate a 'urlcheck-pac' checker without a proxy auto-config script configured")
 		}
-		checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-pac", nil))
+		checkers = addChecker(checkers, newLocalURLChecker(c, checkerPluginURLCheckPAC, nil))
 		log.Info().Msg("Added the PAC file based URL checker")
-	case "urlcheck-noproxy":
+	case checkerPluginURLCheckNoProxy:
 		if urlCheckerSettings.ProxyURL == "" {
 			panic("No point in adding a 'urlcheck-noproxy' checker, as no proxy URL is defined")
 		}
 		urlCheckerSettingsNoProxy := urlCheckerSettings
 		urlCheckerSettingsNoProxy.ProxyURL = ""
-		checkers = addChecker(checkers, newLocalURLChecker(c, "urlcheck-noproxy", buildClient(urlCheckerSettingsNoProxy)))
+		checkers = addChecker(checkers, newLocalURLChecker(c, checkerPluginURLCheckNoProxy, buildClient(urlCheckerSettingsNoProxy)))
 		log.Info().Msg("Added the URL checker that doesn't use a proxy")
 	}
 	return checkers
@@ -158,7 +165,7 @@ func appendHTTPCheckerPlugin(checkers []URLCheckerPlugin, c *URLCheckerClient, c
 
 func appendTestDoubleCheckerPlugin(checkers []URLCheckerPlugin, checkerName string) []URLCheckerPlugin {
 	switch checkerName {
-	case "_ok_after_1s_on_delay.com":
+	case checkerPluginOKAfterDelay:
 		checkers = addChecker(checkers, &fakeURLChecker{1 * time.Second, &URLCheckResult{
 			Status:                Ok,
 			Code:                  http.StatusOK,
@@ -166,9 +173,9 @@ func appendTestDoubleCheckerPlugin(checkers []URLCheckerPlugin, checkerName stri
 			FetchedAtEpochSeconds: 0,
 			BodyPatternsFound:     nil,
 			RemoteAddr:            "",
-		}, "_ok_after_1s_on_delay.com"})
+		}, checkerPluginOKAfterDelay})
 		log.Info().Msg("Added the _always_ok checker")
-	case "_always_ok":
+	case checkerPluginAlwaysOK:
 		checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
 			Status:                Ok,
 			Code:                  http.StatusOK,
@@ -176,9 +183,9 @@ func appendTestDoubleCheckerPlugin(checkers []URLCheckerPlugin, checkerName stri
 			FetchedAtEpochSeconds: 0,
 			BodyPatternsFound:     nil,
 			RemoteAddr:            "",
-		}, "_always_ok"})
+		}, checkerPluginAlwaysOK})
 		log.Info().Msg("Added the _always_ok checker")
-	case "_always_bad":
+	case checkerPluginAlwaysBad:
 		checkers = addChecker(checkers, &fakeURLChecker{0, &URLCheckResult{
 			Status:                Broken,
 			Code:                  http.StatusInternalServerError,
@@ -186,7 +193,7 @@ func appendTestDoubleCheckerPlugin(checkers []URLCheckerPlugin, checkerName stri
 			FetchedAtEpochSeconds: 0,
 			BodyPatternsFound:     nil,
 			RemoteAddr:            "",
-		}, "_always_bad"})
+		}, checkerPluginAlwaysBad})
 		log.Info().Msg("Added the _always_bad checker")
 	}
 	return checkers
@@ -288,7 +295,7 @@ func loadBodyPatternsFromViper(s *urlCheckerSettings) {
 }
 
 func urlCheckerPluginsFromViper() []string {
-	urlCheckerPlugins := []string{"urlcheck"}
+	urlCheckerPlugins := []string{checkerPluginURLCheck}
 	const urlCheckerPluginsKey = "urlCheckerPlugins"
 	g := viper.GetStringSlice(urlCheckerPluginsKey)
 	// empty string slice config creates a single slice with a "[]" -> fix
