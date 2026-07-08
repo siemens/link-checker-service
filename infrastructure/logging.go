@@ -8,12 +8,13 @@ package infrastructure
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func SetUpGlobalLogger() {
@@ -30,35 +31,27 @@ func SetUpConsoleLogging() {
 	}
 }
 
+var zerlogLevelLabels = map[string]string{
+	zerolog.LevelTraceValue: "TRACE",
+	zerolog.LevelDebugValue: "DEBUG",
+	zerolog.LevelInfoValue:  "INFO ",
+	zerolog.LevelWarnValue:  "WARN ",
+	zerolog.LevelErrorValue: "ERROR",
+	zerolog.LevelFatalValue: "FATAL",
+	zerolog.LevelPanicValue: "PANIC",
+}
+
 func levelFormatter() func(i interface{}) string {
 	return func(i interface{}) string {
-		var l string
 		if ll, ok := i.(string); ok {
-			switch ll {
-			case zerolog.LevelTraceValue:
-				l = "TRACE"
-			case zerolog.LevelDebugValue:
-				l = "DEBUG"
-			case zerolog.LevelInfoValue:
-				l = "INFO "
-			case zerolog.LevelWarnValue:
-				l = "WARN "
-			case zerolog.LevelErrorValue:
-				l = "ERROR"
-			case zerolog.LevelFatalValue:
-				l = "FATAL"
-			case zerolog.LevelPanicValue:
-				l = "PANIC"
-			default:
-				l = "???  "
+			if label, found := zerlogLevelLabels[ll]; found {
+				return label
 			}
-		} else {
-			if i == nil {
-				l = "???  "
-			} else {
-				l = strings.ToUpper(fmt.Sprintf("%s     ", i))[0:5]
-			}
+			return "???  "
 		}
-		return l
+		if i == nil {
+			return "???  "
+		}
+		return strings.ToUpper(fmt.Sprintf("%s     ", i))[0:5]
 	}
 }

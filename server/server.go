@@ -213,6 +213,33 @@ func (s *Server) checkURLsInParallel(ctx context.Context, request CheckURLsReque
 	}
 }
 
+func streamCallback(c *gin.Context, ctx context.Context, urls *deduplicator, deadline *time.Timer, resultChannel chan URLStatusResponse, doneChannel chan struct{}, closeNotify <-chan bool) func(io.Writer) bool {
+	return func(w io.Writer) bool {
+		select {
+		case <-deadline.C:
+			log.Info().Msg("Deadline reached, aborting the stream.")
+			return false
+		case <-ctx.Done():
+			log.Info().Msg("Client disconnected, aborting the stream.")
+			return false
+		case <-closeNotify:
+			log.Info().Msg("Client closed the connection, aborting the stream.")
+			return false
+		case urlStatus := <-resultChannel:
+			for _, duplicatedURLStatus := range urls.deduplicatedResultFor(urlStatus) {
+				c.JSON(http.StatusOK, duplicatedURLStatus)
+				c.String(http.StatusOK, "\n")
+				if flusher, ok := c.Writer.(http.Flusher); ok {
+					flusher.Flush()
+				}
+			}
+			return true
+		case <-doneChannel:
+			return false
+		}
+	}
+}
+
 func (s *Server) checkURLsStream(c *gin.Context) {
 	infrastructure.GlobalStats().OnIncomingRequest()
 	infrastructure.GlobalStats().OnIncomingStreamRequest()
@@ -224,36 +251,7 @@ func (s *Server) checkURLsStream(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	urls, deadline, resultChannel, doneChannel := s.setUpAsyncURLCheck(ctx, request)
-	closeNotify := c.Writer.CloseNotify()
-
-	// callback returns false on end of processing
-	c.Stream(func(w io.Writer) bool {
-		select {
-		case <-deadline.C:
-			log.Info().Msg("Deadline reached, aborting the stream.")
-			return false
-		case <-ctx.Done():
-			log.Info().Msg("Client disconnected, aborting the stream.")
-			return false
-
-		case <-closeNotify:
-			log.Info().Msg("Client closed the connection, aborting the stream.")
-			return false
-
-		case urlStatus := <-resultChannel:
-			for _, duplicatedURLStatus := range urls.deduplicatedResultFor(urlStatus) {
-				c.JSON(http.StatusOK, duplicatedURLStatus)
-				c.String(http.StatusOK, "\n")
-				if flusher, ok := c.Writer.(http.Flusher); ok {
-					flusher.Flush()
-				}
-			}
-			return true
-
-		case <-doneChannel:
-			return false
-		}
-	})
+	c.Stream(streamCallback(c, ctx, urls, deadline, resultChannel, doneChannel, c.Writer.CloseNotify()))
 }
 
 func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context, stream bool) (CheckURLsRequest, bool) {

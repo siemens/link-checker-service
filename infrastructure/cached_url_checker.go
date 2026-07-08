@@ -50,24 +50,21 @@ func NewCachedURLChecker() *CachedURLChecker {
 	return &checker
 }
 
+func viperDuration(key string, fallback time.Duration) time.Duration {
+	val := viper.GetString(key)
+	d, err := time.ParseDuration(val)
+	if err != nil {
+		log.Info().Msgf("Ignoring %s %v -> %v (%v)", key, val, fallback, err)
+		return fallback
+	}
+	log.Info().Msgf("%s: %v", key, val)
+	return d
+}
+
 func fetchCachedURLCheckerSettings() cacheSettings {
 	s := cacheSettings{}
-
-	cacheExpirationInterval := viper.GetString("cacheExpirationInterval")
-	if d, err := time.ParseDuration(cacheExpirationInterval); err != nil {
-		log.Info().Msgf("Ignoring cacheExpirationInterval %v -> %v (%v)", cacheExpirationInterval, defaultCacheExpirationInterval, err)
-	} else {
-		s.cacheExpirationInterval = d
-		log.Info().Msgf("cacheExpirationInterval: %v", cacheExpirationInterval)
-	}
-
-	cacheCleanupInterval := viper.GetString("cacheCleanupInterval")
-	if d, err := time.ParseDuration(cacheCleanupInterval); err != nil {
-		log.Info().Msgf("Ignoring cacheCleanupInterval %v -> %v (%v)", cacheCleanupInterval, defaultCacheCleanupInterval, err)
-	} else {
-		log.Info().Msgf("cacheCleanupInterval: %v", cacheCleanupInterval)
-		s.cacheCleanupInterval = d
-	}
+	s.cacheExpirationInterval = viperDuration("cacheExpirationInterval", defaultCacheExpirationInterval)
+	s.cacheCleanupInterval = viperDuration("cacheCleanupInterval", defaultCacheCleanupInterval)
 
 	cacheUseRistretto := viper.GetBool("cacheUseRistretto")
 	log.Info().Msgf("cacheUseRistretto: %v", cacheUseRistretto)
@@ -90,13 +87,7 @@ func fetchCachedURLCheckerSettings() cacheSettings {
 		log.Info().Msgf("cacheNumCounters: %v", cacheNumCounters)
 	}
 
-	retryFailedAfter := viper.GetString("retryFailedAfter")
-	if d, err := time.ParseDuration(retryFailedAfter); err != nil {
-		log.Info().Msgf("Ignoring retryFailedAfter %v -> %v (%v)", cacheCleanupInterval, defaultRetryFailedAfter, err)
-	} else {
-		log.Info().Msgf("retryFailedAfter: %v", retryFailedAfter)
-		s.retryFailedAfter = d
-	}
+	s.retryFailedAfter = viperDuration("retryFailedAfter", defaultRetryFailedAfter)
 	return s
 }
 

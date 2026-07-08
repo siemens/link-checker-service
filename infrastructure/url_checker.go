@@ -30,8 +30,6 @@ import (
 	netUrl "net/url"
 
 	"github.com/go-resty/resty/v2"
-
-	"github.com/siemens/link-checker-service/infrastructure/impersonate"
 )
 
 const defaultLimitBodyToNBytes = 0
@@ -265,7 +263,6 @@ func applyHTTPClientFieldsFromViper(s *urlCheckerSettings) {
 	}
 	s.SkipCertificateCheck = viper.GetBool("HTTPClient.skipCertificateCheck")
 	s.EnableRequestTracing = viper.GetBool("HTTPClient.enableRequestTracing")
-	s.ImpersonateProfile = viper.GetString("HTTPClient.impersonateProfile")
 }
 
 func logURLCheckerHTTPSettings(s urlCheckerSettings) {
@@ -277,7 +274,6 @@ func logURLCheckerHTTPSettings(s urlCheckerSettings) {
 	log.Info().Msgf("HTTP client SkipCertificateCheck: %v", s.SkipCertificateCheck)
 	log.Info().Msgf("HTTP client EnableRequestTracing: %v", s.EnableRequestTracing)
 	log.Info().Msgf("HTTP client LimitBodyToNBytes: %v", s.LimitBodyToNBytes)
-	log.Info().Msgf("HTTP client ImpersonateProfile: %v", s.ImpersonateProfile)
 }
 
 func loadBodyPatternsFromViper(s *urlCheckerSettings) {
@@ -417,27 +413,29 @@ type URLCheckerPluginTrace struct {
 	Error     string
 }
 
+func checkerTraceEntry(checker URLCheckerPlugin, res *URLCheckResult, elapsed time.Duration) URLCheckerPluginTrace {
+	errMsg := ""
+	if res.Error != nil {
+		errMsg = res.Error.Error()
+	}
+	return URLCheckerPluginTrace{
+		Name:      checker.Name(),
+		Code:      res.Code,
+		ElapsedMs: int64(elapsed / time.Millisecond),
+		Error:     errMsg,
+	}
+}
+
 // CheckURL checks a single URL
 func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckResult {
-	var lastRes *URLCheckResult = nil
-	var result URLCheckResult
+	var lastRes *URLCheckResult
 	var checkerTrace []URLCheckerPluginTrace
 	start := time.Now()
-	errorMessage := ""
 
 	for pos, currentChecker := range c.checkerPlugins {
 		checkerStart := time.Now()
 		res, shouldAbort := currentChecker.CheckURL(ctx, url, lastRes)
-		checkerElapsed := time.Since(checkerStart)
-		if res.Error != nil {
-			errorMessage = res.Error.Error()
-		}
-		checkerTrace = append(checkerTrace, URLCheckerPluginTrace{
-			Name:      currentChecker.Name(),
-			Code:      res.Code,
-			ElapsedMs: int64(checkerElapsed / time.Millisecond),
-			Error:     errorMessage,
-		})
+		checkerTrace = append(checkerTrace, checkerTraceEntry(currentChecker, res, time.Since(checkerStart)))
 
 		if pos == 0 && res == nil {
 			panic("first checker should never return nil")
@@ -451,10 +449,9 @@ func (c *URLCheckerClient) CheckURL(ctx context.Context, url string) *URLCheckRe
 	}
 
 	if lastRes != nil {
-		result = *lastRes
+		result := *lastRes
 		result.CheckerTrace = checkerTrace
-		elapsed := time.Since(start)
-		result.ElapsedMs = int64(elapsed / time.Millisecond)
+		result.ElapsedMs = int64(time.Since(start) / time.Millisecond)
 		return &result
 	}
 
@@ -481,6 +478,32 @@ func normalizeAddressOf(input string) string {
 	return u.Host
 }
 
+func (c *URLCheckerClient) maybeWithRequestTrace(ctx context.Context, urlToCheck, addrToResolve string, remoteAddr *string) context.Context {
+	if !c.settings.EnableRequestTracing || *remoteAddr != "" {
+		return ctx
+	}
+	domain := DomainOf(urlToCheck)
+	trace := &httptrace.ClientTrace{
+		ConnectDone: func(network, _addr string, err error) {
+			*remoteAddr = c.resolveAndCacheTCPAddr(network, err, addrToResolve)
+		},
+		DNSDone: func(info httptrace.DNSDoneInfo) {
+			if *remoteAddr == "" {
+				GlobalStats().OnDNSResolutionFailed(domain)
+				// this may not be as precise as ConnectDone, thus skipping caching
+				*remoteAddr = getDNSAddressesAsString(info.Addrs)
+			}
+		},
+	}
+	return httptrace.WithClientTrace(ctx, trace)
+}
+
+func (c *URLCheckerClient) dispatchHeadRequests(ctx context.Context, urlToCheck string, client *resty.Client) *URLCheckResult {
+	// Standard sequence: robot UA first, then browser UA on 403.
+	res := c.tryHeadRequestDefault(ctx, urlToCheck, client)
+	return c.tryHeadRequestAsBrowserIfForbidden(ctx, urlToCheck, client, res)
+}
+
 func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, client *resty.Client) (*URLCheckResult, bool) {
 	select {
 	case <-ctx.Done():
@@ -498,42 +521,11 @@ func (c *URLCheckerClient) checkURL(ctx context.Context, urlToCheck string, clie
 
 	addrToResolve := normalizeAddressOf(urlToCheck)
 	remoteAddr := c.cachedRemoteAddr(addrToResolve)
+	ctx = c.maybeWithRequestTrace(ctx, urlToCheck, addrToResolve, &remoteAddr)
 
-	domain := DomainOf(urlToCheck)
-
-	if c.settings.EnableRequestTracing &&
-		remoteAddr == "" /*enable tracing only if remoteAddr hasn't been resolved yet */ {
-
-		// remoteAddr must be captured from the encompassing scope in the closures below
-		trace := &httptrace.ClientTrace{
-			ConnectDone: func(network, _addr string, err error) {
-				remoteAddr = c.resolveAndCacheTCPAddr(network, err, addrToResolve)
-			},
-			DNSDone: func(info httptrace.DNSDoneInfo) {
-				if remoteAddr == "" {
-					GlobalStats().OnDNSResolutionFailed(domain)
-					// this may not be as precise as ConnectDone, thus skipping caching
-					remoteAddr = getDNSAddressesAsString(info.Addrs)
-				}
-			},
-		}
-		ctx = httptrace.WithClientTrace(ctx, trace)
-	}
-
-	var res *URLCheckResult
-	if c.settings.ImpersonateProfile != "" {
-		// When impersonating a browser, skip the robot User-Agent attempt.
-		// The transport and client headers already match the target browser.
-		res = c.tryHeadRequestAsBrowser(ctx, urlToCheck, client)
-	} else {
-		// Standard sequence: robot UA first, then browser UA on 403.
-		res = c.tryHeadRequestDefault(ctx, urlToCheck, client)
-		res = c.tryHeadRequestAsBrowserIfForbidden(ctx, urlToCheck, client, res)
-	}
+	res := c.dispatchHeadRequests(ctx, urlToCheck, client)
 	res = c.tryGetRequestAndProcessResponseBody(ctx, urlToCheck, client, res)
-
 	res.RemoteAddr = remoteAddr
-
 	return res, false
 }
 
@@ -696,15 +688,6 @@ func (c *URLCheckerClient) searchForBodyPatterns(res *URLCheckResult, body strin
 	return res
 }
 
-func (c *URLCheckerClient) tryHeadRequestAsBrowser(ctx context.Context, urlToCheck string, client *resty.Client) *URLCheckResult {
-	response, err := client.R().
-		SetHeader("Accept", c.settings.AcceptHeader).
-		SetHeader("User-Agent", c.settings.BrowserUserAgent).
-		SetContext(ctx).
-		Head(urlToCheck)
-	return c.processResponse(urlToCheck, response, err)
-}
-
 func (c *URLCheckerClient) tryHeadRequestAsBrowserIfForbidden(ctx context.Context, urlToCheck string, client *resty.Client, res *URLCheckResult) *URLCheckResult {
 	// Some sites don't allow robot user agents
 	if res.Code == http.StatusForbidden {
@@ -728,33 +711,35 @@ func (c *URLCheckerClient) limitedBody(response *resty.Response) string {
 }
 
 func safelyTrimmedStream(input io.Reader, limit uint) string {
-	res := []byte{}
 	if limit == 0 {
-		b, err := io.ReadAll(input)
-		if err != nil {
-			if b != nil {
-				res = b
-			}
-			return string(safelyTrimmedString(res, limit))
-		}
-		return string(b)
+		return readAllSafe(input)
 	}
+	return readLimited(input, limit)
+}
 
+func readAllSafe(input io.Reader) string {
+	b, err := io.ReadAll(input)
+	if err != nil {
+		if b != nil {
+			return string(safelyTrimmedString(b, 0))
+		}
+		return ""
+	}
+	return string(b)
+}
+
+func readLimited(input io.Reader, limit uint) string {
 	const bufferSize = 1024
+	var res []byte
 	b := [bufferSize]byte{}
 	bytesRead := 0
 	for {
 		n, err := input.Read(b[:])
-
+		res = append(res, b[:n]...)
 		if err != nil {
-			// first append bytes read so far
-			res = append(res, b[:n]...)
 			return string(safelyTrimmedString(res, limit))
 		}
-
-		res = append(res, b[:n]...)
 		bytesRead += n
-
 		if uint(bytesRead) >= limit {
 			break
 		}
@@ -778,24 +763,8 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 		client.SetProxy(settings.ProxyURL)
 	}
 
-	skipVerify := settings.SkipCertificateCheck
-
-	if settings.ImpersonateProfile != "" {
-		profile := impersonate.ProfileByName(settings.ImpersonateProfile)
-		transport := impersonate.NewTransport(profile, skipVerify)
-		client.SetTransport(transport)
-
-		// Set browser default headers from the impersonation profile
-		for key, values := range profile.DefaultHeaders {
-			for _, value := range values {
-				client.SetHeader(key, value)
-			}
-		}
-		log.Info().Msgf("HTTP client impersonating as: %v", profile.Name)
-	} else if skipVerify {
-		// Only set custom TLS config when NOT impersonating (impersonation
-		// transport already handles skipVerify). This is known to be insecure,
-		// thus protected via a configuration with a secure default.
+	if settings.SkipCertificateCheck {
+		// This is known to be insecure, thus protected via a configuration with a secure default.
 		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	}
 

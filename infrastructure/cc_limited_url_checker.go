@@ -82,6 +82,15 @@ func (r *CCLimitedURLChecker) CheckURL(ctx context.Context, url string) *URLChec
 	return r.checkURL(ctx, url)
 }
 
+func droppedResult(nowEpoch int64, err error) *URLCheckResult {
+	return &URLCheckResult{
+		Status:                Dropped,
+		Code:                  CustomHTTPErrorCode,
+		Error:                 err,
+		FetchedAtEpochSeconds: nowEpoch,
+	}
+}
+
 func (r *CCLimitedURLChecker) checkURL(ctx context.Context, url string) *URLCheckResult {
 	nowEpoch := time.Now().Unix()
 
@@ -92,12 +101,7 @@ func (r *CCLimitedURLChecker) checkURL(ctx context.Context, url string) *URLChec
 		if token != nil {
 			token.OnDropped()
 		}
-		return &URLCheckResult{
-			Status:                Dropped,
-			Code:                  CustomHTTPErrorCode,
-			Error:                 fmt.Errorf("short circuited request"),
-			FetchedAtEpochSeconds: nowEpoch,
-		}
+		return droppedResult(nowEpoch, fmt.Errorf("short circuited request"))
 	}
 
 	resultChannel := make(chan *URLCheckResult)
@@ -114,11 +118,6 @@ func (r *CCLimitedURLChecker) checkURL(ctx context.Context, url string) *URLChec
 	case <-ctx.Done():
 		// client probably disconnected
 		token.OnDropped()
-		return &URLCheckResult{
-			Status:                Dropped,
-			Code:                  CustomHTTPErrorCode,
-			Error:                 fmt.Errorf("cancelled request"),
-			FetchedAtEpochSeconds: nowEpoch,
-		}
+		return droppedResult(nowEpoch, fmt.Errorf("cancelled request"))
 	}
 }

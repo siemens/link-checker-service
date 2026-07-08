@@ -13,7 +13,7 @@ import (
 func TestChromeProfile(t *testing.T) {
 	p := ChromeProfile()
 
-	if p.Name != "chrome" {
+	if p.Name != profileNameChrome {
 		t.Errorf("expected name 'chrome', got %q", p.Name)
 	}
 
@@ -41,7 +41,7 @@ func TestChromeProfile(t *testing.T) {
 func TestFirefoxProfile(t *testing.T) {
 	p := FirefoxProfile()
 
-	if p.Name != "firefox" {
+	if p.Name != profileNameFirefox {
 		t.Errorf("expected name 'firefox', got %q", p.Name)
 	}
 
@@ -61,7 +61,7 @@ func TestFirefoxProfile(t *testing.T) {
 func TestSafariProfile(t *testing.T) {
 	p := SafariProfile()
 
-	if p.Name != "safari" {
+	if p.Name != profileNameSafari {
 		t.Errorf("expected name 'safari', got %q", p.Name)
 	}
 
@@ -84,11 +84,11 @@ func TestProfileByName(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"chrome", "chrome", "chrome"},
-		{"firefox", "firefox", "firefox"},
-		{"safari", "safari", "safari"},
-		{"unknown returns chrome", "edge", "chrome"},
-		{"empty returns chrome", "", "chrome"},
+		{profileNameChrome, profileNameChrome, profileNameChrome},
+		{profileNameFirefox, profileNameFirefox, profileNameFirefox},
+		{profileNameSafari, profileNameSafari, profileNameSafari},
+		{"unknown returns chrome", "edge", profileNameChrome},
+		{"empty returns chrome", "", profileNameChrome},
 	}
 
 	for _, tt := range tests {

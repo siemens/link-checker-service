@@ -50,7 +50,6 @@ const (
 	acceptHeaderKey         = "acceptHeader"
 	skipCertificateCheckKey = "skipCertificateCheck"
 	enableRequestTracingKey = "enableRequestTracing"
-	impersonateProfileKey   = "impersonateProfile"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -106,8 +105,6 @@ func registerHTTPClientPersistentFlags() {
 	_ = viper.BindPFlag(httpClientMapKey+enableRequestTracingKey, rootCmd.PersistentFlags().Lookup(enableRequestTracingKey))
 	rootCmd.PersistentFlags().Uint(limitBodyToNBytesKey, 0, "HTTP client: maximum number of bytes to read from the body when searching for patterns. Unlimited if 0!")
 	_ = viper.BindPFlag(httpClientMapKey+limitBodyToNBytesKey, rootCmd.PersistentFlags().Lookup(limitBodyToNBytesKey))
-	rootCmd.PersistentFlags().String(impersonateProfileKey, "", "HTTP client: browser profile for TLS fingerprint impersonation (chrome, firefox, safari)")
-	_ = viper.BindPFlag(httpClientMapKey+impersonateProfileKey, rootCmd.PersistentFlags().Lookup(impersonateProfileKey))
 }
 
 func registerCachePersistentFlags() {

@@ -19,6 +19,12 @@ import (
 	"net/http"
 )
 
+const (
+	profileNameChrome  = "chrome"
+	profileNameFirefox = "firefox"
+	profileNameSafari  = "safari"
+)
+
 // Profile defines a browser impersonation profile with TLS cipher/curve
 // preferences and default HTTP headers matching the target browser.
 type Profile struct {
@@ -68,7 +74,7 @@ var firefoxCurves = []tls.CurveID{
 // ChromeProfile returns a profile with Chrome-like TLS preferences and headers.
 func ChromeProfile() Profile {
 	return Profile{
-		Name:             "chrome",
+		Name:             profileNameChrome,
 		CipherSuites:     chromeCiphers,
 		CurvePreferences: chromeCurves,
 		DefaultHeaders: http.Header{
@@ -92,7 +98,7 @@ func ChromeProfile() Profile {
 // FirefoxProfile returns a profile with Firefox-like TLS preferences and headers.
 func FirefoxProfile() Profile {
 	return Profile{
-		Name:             "firefox",
+		Name:             profileNameFirefox,
 		CipherSuites:     chromeCiphers, // Firefox uses same modern cipher suite order
 		CurvePreferences: firefoxCurves,
 		DefaultHeaders: http.Header{
@@ -110,7 +116,7 @@ func FirefoxProfile() Profile {
 // SafariProfile returns a profile with Safari-like TLS preferences and headers.
 func SafariProfile() Profile {
 	return Profile{
-		Name:             "safari",
+		Name:             profileNameSafari,
 		CipherSuites:     chromeCiphers, // Safari uses same modern cipher suite order
 		CurvePreferences: chromeCurves,
 		DefaultHeaders: http.Header{
@@ -128,9 +134,9 @@ func SafariProfile() Profile {
 // Valid names: "chrome", "firefox", "safari".
 func ProfileByName(name string) Profile {
 	switch name {
-	case "firefox":
+	case profileNameFirefox:
 		return FirefoxProfile()
-	case "safari":
+	case profileNameSafari:
 		return SafariProfile()
 	default:
 		return ChromeProfile()
