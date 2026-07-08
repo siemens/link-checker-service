@@ -42,28 +42,28 @@ linters:
     - unused
   settings:
     cyclop:
-      max-complexity: 15
-      package-average: 12.0
+      max-complexity: 10
+      package-average: 8.0
     errcheck:
       check-type-assertions: true
     errorlint:
       comparison: true
       asserts: true
     funlen:
-      lines: 100
-      statements: 60
+      lines: 60
+      statements: 40
     gocognit:
-      min-complexity: 30
+      min-complexity: 10
     goconst:
       min-len: 3
       min-occurrences: 4
       match-constant: true
     maintidx:
-      under: 40
+      under: 45
     nakedret:
       max-func-lines: 40
     nestif:
-      min-complexity: 6
+      min-complexity: 5
     unparam:
       check-exported: false
   exclusions:
@@ -74,6 +74,8 @@ linters:
       - path: _test\.go
         linters:
           - errcheck
+          - funlen
+          - maintidx
           - noctx
           - unparam
 
