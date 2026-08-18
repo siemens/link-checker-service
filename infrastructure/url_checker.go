@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/darren/gpac"
+	"github.com/gobwas/glob"
 
 	"github.com/patrickmn/go-cache"
 
@@ -33,6 +34,7 @@ import (
 )
 
 const defaultLimitBodyToNBytes = 0
+const hardBodyReadCap = 8 * 1024 * 1024
 const defaultMaxRedirectsCount = 15
 const defaultTimeoutSeconds = 10
 const defaultUserAgent = "lcs/0.9"
@@ -84,6 +86,7 @@ type urlCheckerSettings struct {
 	PacScriptURL          string
 	LimitBodyToNBytes     uint
 	ImpersonateProfile    string
+	DomainBlacklistGlobs  []string
 }
 
 // URLChecker interface that all layers should conform to
@@ -314,6 +317,9 @@ func getURLCheckerSettings() urlCheckerSettings {
 	s.SearchForBodyPatterns = viper.GetBool("searchForBodyPatterns")
 	loadBodyPatternsFromViper(&s)
 	s.URLCheckerPlugins = urlCheckerPluginsFromViper()
+	if g := viper.GetStringSlice("domainBlacklistGlobs"); len(g) > 0 && (len(g) != 1 || g[0] != "[]") {
+		s.DomainBlacklistGlobs = g
+	}
 	return s
 }
 
@@ -718,7 +724,7 @@ func safelyTrimmedStream(input io.Reader, limit uint) string {
 }
 
 func readAllSafe(input io.Reader) string {
-	b, err := io.ReadAll(input)
+	b, err := io.ReadAll(io.LimitReader(input, hardBodyReadCap))
 	if err != nil {
 		if b != nil {
 			return string(safelyTrimmedString(b, 0))
@@ -758,7 +764,10 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 	client := resty.New()
 	client.SetTimeout(time.Second * time.Duration(settings.TimeoutSeconds))
 	client.SetCloseConnection(true)
-	client.SetRedirectPolicy(resty.FlexibleRedirectPolicy(defaultMaxRedirectsCount))
+	client.SetRedirectPolicy(
+		resty.FlexibleRedirectPolicy(defaultMaxRedirectsCount),
+		blacklistRedirectPolicy(settings.DomainBlacklistGlobs),
+	)
 	if settings.ProxyURL != "" {
 		client.SetProxy(settings.ProxyURL)
 	}
@@ -769,4 +778,23 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 	}
 
 	return client
+}
+
+func blacklistRedirectPolicy(patterns []string) resty.RedirectPolicy {
+	var globs []glob.Glob
+	for _, p := range patterns {
+		globs = append(globs, glob.MustCompile(p))
+	}
+	return resty.RedirectPolicyFunc(func(req *http.Request, via []*http.Request) error {
+		if len(globs) == 0 {
+			return nil
+		}
+		domain := DomainOf(req.URL.String())
+		for _, g := range globs {
+			if g.Match(domain) {
+				return fmt.Errorf("redirect to blacklisted domain: %s", domain)
+			}
+		}
+		return nil
+	})
 }
