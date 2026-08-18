@@ -38,6 +38,7 @@ import (
 const totalRequestDeadlineTimeoutSecondsPerURL = 15
 const totalRequestDeadlineTimeoutSeconds = 300
 const largeRequestLoggingThreshold = 200
+const maxRequestBodySize = 10 * 1024 * 1024
 
 // JWTValidationOptions configures authentication via JWT validation
 type JWTValidationOptions struct {
@@ -255,6 +256,7 @@ func (s *Server) checkURLsStream(c *gin.Context) {
 }
 
 func (s *Server) parseURLCheckRequestOrAbort(c *gin.Context, stream bool) (CheckURLsRequest, bool) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxRequestBodySize)
 	var request CheckURLsRequest
 	err := c.BindJSON(&request)
 	if err != nil {

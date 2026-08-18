@@ -643,3 +643,38 @@ func parseStreamingResponses(t *testing.T, body string) []*server.URLStatusRespo
 	}
 	return res
 }
+
+func TestDefaultMaxURLsInRequestEnforced(t *testing.T) {
+	setUpViperTestConfiguration()
+	testServer := server.NewServerWithOptions(&server.Options{
+		MaxURLsInRequest: 3,
+	})
+	router := testServer.Detail()
+
+	t.Run("within limit succeeds", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", endpoint, strings.NewReader(firstRequest))
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("over limit is rejected", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", endpoint, strings.NewReader(secondRequest))
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusRequestEntityTooLarge, w.Code)
+	})
+}
+
+func TestOversizedRequestBodyRejected(t *testing.T) {
+	setUpViperTestConfiguration()
+	testServer := server.NewServer()
+	router := testServer.Detail()
+
+	// 11 MB of junk JSON exceeds the 10 MB body limit
+	huge := `{"urls":[{"url":"` + strings.Repeat("x", 11*1024*1024) + `","context":"0"}]}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", endpoint, strings.NewReader(huge))
+	router.ServeHTTP(w, req)
+	assert.NotEqual(t, http.StatusOK, w.Code, "oversized request body should be rejected")
+}

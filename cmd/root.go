@@ -126,7 +126,7 @@ func registerServicePersistentFlags() {
 
 	rootCmd.PersistentFlags().String(retryFailedAfterKey, "30s", "If a URL check failed, e.g. intermittently, re-run it after <interval>  (in ns/us/ms/s/m/h)")
 	_ = viper.BindPFlag(retryFailedAfterKey, rootCmd.PersistentFlags().Lookup(retryFailedAfterKey))
-	rootCmd.PersistentFlags().UintP(maxURLsInRequestKey, "m", 0, "Maximum number URLs allowed per request")
+	rootCmd.PersistentFlags().UintP(maxURLsInRequestKey, "m", 15000, "Maximum number URLs allowed per request. 0 = unlimited")
 	_ = viper.BindPFlag(maxURLsInRequestKey, rootCmd.PersistentFlags().Lookup(maxURLsInRequestKey))
 
 	rootCmd.PersistentFlags().Float64(requestsPerSecondPerDomainKey, 10, "Maximum requests per second per domain")
