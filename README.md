@@ -2,7 +2,7 @@
 
 The Link Checker web service runs cached and otherwise optimized broken link checks.
 
-> **Security Notice:** This service fetches arbitrary, user-submitted URLs to check whether they are broken. By design, it issues outbound HTTP requests to any URL a client provides. In production, deploy behind authentication (JWT is built-in), restrict network egress (e.g. via NetworkPolicy), configure `domainBlacklistGlobs` to block internal/sensitive domains, and set `maxURLsInRequest` to limit per-request resource consumption. See the [configuration section](#configuration) for details.
+> **Security Notice:** This service fetches arbitrary, user-submitted URLs to check whether they are broken. By design, it issues outbound HTTP requests to any URL a client provides. In production, deploy behind authentication (JWT is built-in), restrict network egress (e.g. via NetworkPolicy), configure `domainBlacklistGlobs` to block internal/sensitive domains, set `maxURLsInRequest` to limit per-request resource consumption, and apply resource limits (CPU, memory, and concurrent connections) appropriate to your deployment environment. See the [configuration section](#configuration) for details.
 
 [![Test](https://github.com/siemens/link-checker-service/actions/workflows/test.yml/badge.svg)](https://github.com/siemens/link-checker-service/actions/workflows/test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/siemens/link-checker-service)](https://goreportcard.com/report/github.com/siemens/link-checker-service) ![CodeQL](https://github.com/siemens/link-checker-service/workflows/CodeQL/badge.svg)
 
