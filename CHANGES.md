@@ -2,6 +2,14 @@
 
 Notable changes will be documented here
 
+## 0.9.42
+
+- security enhancements
+  - domain blacklist now enforced on redirect hops, not just the initial URL
+  - hard 8 MB cap on response body reads when `limitBodyToNBytes` is 0
+  - default `maxURLsInRequest` changed from unlimited to 15000
+  - added 10 MB inbound request body size limit
+
 ## 0.9.41
 
 - release more binaries via goreleaser
