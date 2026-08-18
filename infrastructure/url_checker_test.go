@@ -257,3 +257,71 @@ func faultyReaderOf(s string, i int) io.Reader {
 func streamOf(s string) io.Reader {
 	return strings.NewReader(s)
 }
+
+func Test_readAllSafe_capsAtHardLimit(t *testing.T) {
+	oversized := strings.Repeat("x", hardBodyReadCap+1000)
+	result := readAllSafe(streamOf(oversized))
+	assert.Equal(t, hardBodyReadCap, len(result), "readAllSafe must cap at hardBodyReadCap")
+}
+
+func Test_readAllSafe_passesSmallInput(t *testing.T) {
+	small := "hello world"
+	result := readAllSafe(streamOf(small))
+	assert.Equal(t, small, result)
+}
+
+func Test_blacklistRedirectPolicy(t *testing.T) {
+	t.Run("blocks redirect to blacklisted domain", func(t *testing.T) {
+		policy := blacklistRedirectPolicy([]string{"internal.corp.*"})
+		req, _ := http.NewRequest("GET", "http://internal.corp.example/secret", nil)
+		err := policy.Apply(req, []*http.Request{})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "blacklisted")
+	})
+
+	t.Run("allows redirect to non-blacklisted domain", func(t *testing.T) {
+		policy := blacklistRedirectPolicy([]string{"internal.corp.*"})
+		req, _ := http.NewRequest("GET", "http://public.example.com/page", nil)
+		err := policy.Apply(req, []*http.Request{})
+		assert.NoError(t, err)
+	})
+
+	t.Run("no-op when blacklist is empty", func(t *testing.T) {
+		policy := blacklistRedirectPolicy(nil)
+		req, _ := http.NewRequest("GET", "http://anything.example.com/", nil)
+		err := policy.Apply(req, []*http.Request{})
+		assert.NoError(t, err)
+	})
+
+	t.Run("matches multiple glob patterns", func(t *testing.T) {
+		policy := blacklistRedirectPolicy([]string{"*.internal", "secret.*"})
+		req1, _ := http.NewRequest("GET", "http://db.internal/admin", nil)
+		assert.Error(t, policy.Apply(req1, []*http.Request{}))
+
+		req2, _ := http.NewRequest("GET", "http://secret.corp/data", nil)
+		assert.Error(t, policy.Apply(req2, []*http.Request{}))
+
+		req3, _ := http.NewRequest("GET", "http://public.example.com/", nil)
+		assert.NoError(t, policy.Apply(req3, []*http.Request{}))
+	})
+}
+
+func TestRedirectToBlacklistedDomainIsBlocked(t *testing.T) {
+	internal := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("request reached the blacklisted internal server")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer internal.Close()
+
+	internalHost := internal.Listener.Addr().String()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://"+internalHost+"/", http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	setUpViperTestConfiguration()
+	viper.Set("domainBlacklistGlobs", []string{DomainOf("http://" + internalHost)})
+	res := NewURLCheckerClient().CheckURL(context.Background(), redirector.URL)
+	assert.NotEqual(t, http.StatusOK, res.Code, "should not have reached the blacklisted target")
+}
