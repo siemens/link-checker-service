@@ -10,11 +10,11 @@ import (
 	"testing"
 )
 
-func TestChromeProfile(t *testing.T) {
-	p := ChromeProfile()
+func assertCommonProfileFields(t *testing.T, p Profile, expectedName string) {
+	t.Helper()
 
-	if p.Name != profileNameChrome {
-		t.Errorf("expected name 'chrome', got %q", p.Name)
+	if p.Name != expectedName {
+		t.Errorf("expected name %q, got %q", expectedName, p.Name)
 	}
 
 	if len(p.CipherSuites) == 0 {
@@ -28,6 +28,11 @@ func TestChromeProfile(t *testing.T) {
 	if p.DefaultHeaders.Get("User-Agent") == "" {
 		t.Error("expected User-Agent header to be set")
 	}
+}
+
+func TestChromeProfile(t *testing.T) {
+	p := ChromeProfile()
+	assertCommonProfileFields(t, p, profileNameChrome)
 
 	if p.DefaultHeaders.Get("Sec-Ch-Ua") == "" {
 		t.Error("expected Sec-Ch-Ua header to be set")
@@ -40,42 +45,12 @@ func TestChromeProfile(t *testing.T) {
 
 func TestFirefoxProfile(t *testing.T) {
 	p := FirefoxProfile()
-
-	if p.Name != profileNameFirefox {
-		t.Errorf("expected name 'firefox', got %q", p.Name)
-	}
-
-	if len(p.CipherSuites) == 0 {
-		t.Error("expected CipherSuites to be set")
-	}
-
-	if len(p.CurvePreferences) == 0 {
-		t.Error("expected CurvePreferences to be set")
-	}
-
-	if p.DefaultHeaders.Get("User-Agent") == "" {
-		t.Error("expected User-Agent header to be set")
-	}
+	assertCommonProfileFields(t, p, profileNameFirefox)
 }
 
 func TestSafariProfile(t *testing.T) {
 	p := SafariProfile()
-
-	if p.Name != profileNameSafari {
-		t.Errorf("expected name 'safari', got %q", p.Name)
-	}
-
-	if len(p.CipherSuites) == 0 {
-		t.Error("expected CipherSuites to be set")
-	}
-
-	if len(p.CurvePreferences) == 0 {
-		t.Error("expected CurvePreferences to be set")
-	}
-
-	if p.DefaultHeaders.Get("User-Agent") == "" {
-		t.Error("expected User-Agent header to be set")
-	}
+	assertCommonProfileFields(t, p, profileNameSafari)
 }
 
 func TestProfileByName(t *testing.T) {

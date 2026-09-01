@@ -32,18 +32,22 @@ func TestDeduplicator_groupsURLsByNormalizedKey(t *testing.T) {
 	assert.Len(t, urls.toDuplicate["http://a"], 2)
 }
 
-func TestDeduplicator_expandsCachedResponseAcrossDuplicateURLs(t *testing.T) {
-	request := deduplicatorTestRequest()
-	urls := deduplicateURLs(request)
-
-	aResponse := URLStatusResponse{
-		URLRequest:            request[0],
+func testResponseFor(r URLRequest) URLStatusResponse {
+	return URLStatusResponse{
+		URLRequest:            r,
 		Status:                "ok",
 		HTTPStatus:            infrastructure.CustomHTTPErrorCode,
 		Error:                 "error!",
 		FetchedAtEpochSeconds: 0,
 		BodyPatternsFound:     []string{"a"},
 	}
+}
+
+func TestDeduplicator_expandsCachedResponseAcrossDuplicateURLs(t *testing.T) {
+	request := deduplicatorTestRequest()
+	urls := deduplicateURLs(request)
+
+	aResponse := testResponseFor(request[0])
 	urls.onResponse(&aResponse)
 
 	a := urls.allResultsDeduplicated([]URLStatusResponse{aResponse})
@@ -60,14 +64,7 @@ func TestDeduplicator_mergesDistinctURLsWhenBothCached(t *testing.T) {
 	request := deduplicatorTestRequest()
 	urls := deduplicateURLs(request)
 
-	aResponse := URLStatusResponse{
-		URLRequest:            request[0],
-		Status:                "ok",
-		HTTPStatus:            infrastructure.CustomHTTPErrorCode,
-		Error:                 "error!",
-		FetchedAtEpochSeconds: 0,
-		BodyPatternsFound:     []string{"a"},
-	}
+	aResponse := testResponseFor(request[0])
 	urls.onResponse(&aResponse)
 
 	bResponse := aResponse
