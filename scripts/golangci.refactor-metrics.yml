@@ -4,7 +4,7 @@
 # Complexity & structure: gocognit, cyclop, nestif, funlen, maintidx.
 # Correctness & API hygiene: errcheck, errorlint, govet, staticcheck, unused, bodyclose,
 #   nilerr, nilnil, noctx, ineffassign, nakedret, unparam.
-# Formatting: gofmt.
+# Formatting: gofmt runs as a standalone step in the wrapper script.
 # Security: gosec.  (govulncheck runs as a standalone step in the wrapper script.)
 # Readability & drift: goconst, misspell, dupword, prealloc.
 #
@@ -27,7 +27,6 @@ linters:
     - errcheck
     - errorlint
     - funlen
-    - gofmt
     - gocognit
     - goconst
     - gosec

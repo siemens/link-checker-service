@@ -220,6 +220,18 @@ if [[ "${BUILD_STOP_ON_LINT_FINDINGS:-0}" != "1" ]]; then
   REFACTOR_METRICS_NO_FAIL=1
 fi
 
+# --- gofmt (golangci-lint v2 classifies formatters separately) ---------------
+echo "==> gofmt" >&2
+fmt_output="$(gofmt -l . 2>&1)" || true
+if [[ -n "${fmt_output}" ]]; then
+  printf '%s\n' "${fmt_output}" >&2
+  if [[ "${REFACTOR_METRICS_NO_FAIL:-}" != "1" ]]; then
+    echo "gofmt: the files above need formatting (gofmt -w .)" >&2
+    exit 1
+  fi
+  echo "gofmt: issues found (non-blocking)" >&2
+fi
+
 # --- govulncheck (not available as a golangci-lint linter) -------------------
 if command -v govulncheck >/dev/null 2>&1; then
   govulncheck_bin=$(command -v govulncheck)
