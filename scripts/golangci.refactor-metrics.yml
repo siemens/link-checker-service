@@ -78,6 +78,7 @@ linters:
         linters:
           - errcheck
           - funlen
+          - gosec
           - maintidx
           - noctx
           - unparam

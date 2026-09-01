@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -762,7 +763,7 @@ func safelyTrimmedString(s []byte, limit uint) []byte {
 
 func buildClient(settings urlCheckerSettings) *resty.Client {
 	client := resty.New()
-	client.SetTimeout(time.Second * time.Duration(settings.TimeoutSeconds))
+	client.SetTimeout(time.Second * time.Duration(min(settings.TimeoutSeconds, uint(math.MaxInt64))))
 	client.SetCloseConnection(true)
 	client.SetRedirectPolicy(
 		resty.FlexibleRedirectPolicy(defaultMaxRedirectsCount),
@@ -774,14 +775,14 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 
 	if settings.SkipCertificateCheck {
 		// This is known to be insecure, thus protected via a configuration with a secure default.
-		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}) //nolint:gosec // intentional, guarded by SkipCertificateCheck config
 	}
 
 	return client
 }
 
 func blacklistRedirectPolicy(patterns []string) resty.RedirectPolicy {
-	var globs []*glob.Pattern
+	globs := make([]*glob.Pattern, 0, len(patterns))
 	for _, p := range patterns {
 		globs = append(globs, glob.MustCompile(p))
 	}
