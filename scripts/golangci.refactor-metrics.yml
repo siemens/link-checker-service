@@ -4,6 +4,8 @@
 # Complexity & structure: gocognit, cyclop, nestif, funlen, maintidx.
 # Correctness & API hygiene: errcheck, errorlint, govet, staticcheck, unused, bodyclose,
 #   nilerr, nilnil, noctx, ineffassign, nakedret, unparam.
+# Formatting: gofmt.
+# Security: gosec.  (govulncheck runs as a standalone step in the wrapper script.)
 # Readability & drift: goconst, misspell, dupword, prealloc.
 #
 # Not enabled: fatcontext — it only applies to stdlib context.Context being reassigned inside
@@ -25,8 +27,10 @@ linters:
     - errcheck
     - errorlint
     - funlen
+    - gofmt
     - gocognit
     - goconst
+    - gosec
     - govet
     - ineffassign
     - maintidx

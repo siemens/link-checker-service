@@ -220,6 +220,34 @@ if [[ "${BUILD_STOP_ON_LINT_FINDINGS:-0}" != "1" ]]; then
   REFACTOR_METRICS_NO_FAIL=1
 fi
 
+# --- govulncheck (not available as a golangci-lint linter) -------------------
+if command -v govulncheck >/dev/null 2>&1; then
+  govulncheck_bin=$(command -v govulncheck)
+elif [[ "${REFACTOR_METRICS_BOOTSTRAP:-1}" == "1" ]] && command -v go >/dev/null 2>&1; then
+  echo "govulncheck not found. Trying to install automatically..." >&2
+  go install golang.org/x/vuln/cmd/govulncheck@latest 2>/dev/null || true
+  govulncheck_bin="$(go env GOBIN 2>/dev/null || true)"
+  if [[ -z "${govulncheck_bin}" ]]; then
+    govulncheck_bin="$(go env GOPATH 2>/dev/null || true)/bin"
+  fi
+  govulncheck_bin="${govulncheck_bin}/govulncheck"
+  [[ -x "${govulncheck_bin}" ]] || govulncheck_bin=""
+else
+  govulncheck_bin=""
+fi
+
+if [[ -n "${govulncheck_bin}" ]]; then
+  echo "==> govulncheck" >&2
+  if ! "${govulncheck_bin}" ./...; then
+    if [[ "${REFACTOR_METRICS_NO_FAIL:-}" != "1" ]]; then
+      exit 1
+    fi
+    echo "govulncheck: issues found (non-blocking)" >&2
+  fi
+else
+  echo "==> govulncheck: skipped (not installed)" >&2
+fi
+
 golangci_cmd=(run -c "${CONFIG}")
 if [[ -n "${only_linters}" ]]; then
   golangci_cmd+=(--enable-only "${only_linters}")
