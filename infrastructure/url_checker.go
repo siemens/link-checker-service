@@ -781,7 +781,7 @@ func buildClient(settings urlCheckerSettings) *resty.Client {
 }
 
 func blacklistRedirectPolicy(patterns []string) resty.RedirectPolicy {
-	var globs []glob.Glob
+	var globs []*glob.Pattern
 	for _, p := range patterns {
 		globs = append(globs, glob.MustCompile(p))
 	}

@@ -64,7 +64,7 @@ type Server struct {
 	server               *gin.Engine
 	options              *Options
 	urlChecker           *infrastructure.CachedURLChecker
-	domainBlacklistGlobs []glob.Glob
+	domainBlacklistGlobs []*glob.Pattern
 }
 
 // NewServerWithOptions creates a new server instance with custom options
@@ -79,13 +79,13 @@ func NewServerWithOptions(options *Options) Server {
 	return server
 }
 
-func precompileGlobs(globs []string) []glob.Glob {
+func precompileGlobs(globs []string) []*glob.Pattern {
 
 	if len(globs) == 0 {
 		return nil
 	}
 
-	var res []glob.Glob
+	var res []*glob.Pattern
 	for _, pattern := range globs {
 		// see if more complex pattern handling needed
 		// glob.MustCompile(pattern, '.','/')
