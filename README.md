@@ -288,6 +288,11 @@ Status code distribution:
 
 - see [go.mod](go.mod)
 
+## Used by
+
+- [n8n-nodes-link-checker](https://www.npmjs.com/package/n8n-nodes-link-checker) - an [n8n](https://github.com/n8n-io/n8n)
+  community node for the [link checker service](./)
+
 ## Alternatives
 
 the alternatives that are not URL list check web services:

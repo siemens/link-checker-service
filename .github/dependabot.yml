@@ -1,0 +1,34 @@
+# Dependabot keeps dependencies up to date by opening PRs automatically.
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  # GitHub Actions used by every workflow in .github/workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Go modules. Each go.mod is its own module and needs its own entry.
+  - package-ecosystem: "gomod"
+    directories:
+      - "/"
+      - "/test/jquery_example"
+      - "/test/large_list_check"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+
+  # Base images in the Dockerfiles.
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/test/jquery_example"
+    schedule:
+      interval: "weekly"

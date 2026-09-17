@@ -11,40 +11,44 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Go Fmt
       run: go fmt ./...
     - name: Test
       run: go test ./...
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-  # to do: lint when dealing with false positives is solved
-  # https://golangci-lint.run/usage/false-positives/
+  # Quality gate: formatting + static analysis (mirrors scripts/quality-gate.sh).
   # https://github.com/golangci/golangci-lint-action
-  # golangci:
-  #   name: lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: golangci-lint
-  #       uses: golangci/golangci-lint-action@v2
-  #       with:
-  #         # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-  #         version: v1.29
-
-  #         # Optional: working directory, useful for monorepos
-  #         # working-directory: somedir
-
-  #         # Optional: golangci-lint command line arguments.
-  #         # args: --issues-exit-code=0
-
-  #         # Optional: show only new issues if it's a pull request. The default value is `false`.
-  #         # only-new-issues: true
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: 1.25.x
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: gofmt
+      run: |
+        unformatted="$(gofmt -l .)"
+        if [ -n "$unformatted" ]; then
+          echo "gofmt: the following files need formatting (gofmt -w .):"
+          echo "$unformatted"
+          exit 1
+        fi
+    - name: go vet
+      run: go vet ./...
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v9
+      with:
+        version: v2.13.2
