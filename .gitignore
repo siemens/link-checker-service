@@ -151,3 +151,4 @@ test/large_list_check/large_list_check
 *.log
 dist/
 report/*.json
+.codebase-memory/
