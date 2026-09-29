@@ -8,7 +8,7 @@ require (
 	github.com/darren/gpac v0.0.0-20210609082804-b56d6523a3af
 	github.com/dgraph-io/ristretto/v2 v2.4.2
 	github.com/dn365/gin-zerolog v0.0.0-20171227063204-b43714b00db1
-	github.com/gin-contrib/cors v1.7.8
+	github.com/gin-contrib/cors v1.7.9
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/gobwas/glob v1.0.0
