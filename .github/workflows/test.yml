@@ -48,7 +48,11 @@ jobs:
         fi
     - name: go vet
       run: go vet ./...
+    # Keep this binary in step with the Go toolchain above: golangci-lint parses
+    # the stdlib export data of the installed Go, and a release built with an
+    # older Go fails to decode it ("export data version 5 is greater than
+    # maximum supported version 4"). v2.15.0 is built with Go 1.27.
     - name: golangci-lint
       uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
       with:
-        version: v2.13.2
+        version: v2.15.0
