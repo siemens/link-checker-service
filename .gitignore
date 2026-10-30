@@ -2,6 +2,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/go,intellij,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,intellij,visualstudiocode
 
+### Codebase memory (local graph index — do not commit) ###
+.codebase-memory/
+
 ### Go ###
 # Binaries for programs and plugins
 *.exe
